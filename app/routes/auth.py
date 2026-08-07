@@ -13,7 +13,16 @@ from flask import (
 from werkzeug.security import check_password_hash
 
 from .. import db
-from ..auth import autenticar, encerrar_sessao, hash_senha, iniciar_sessao, usuario_atual
+from ..auth import (
+    autenticar,
+    encerrar_sessao,
+    hash_senha,
+    iniciar_sessao,
+    limpar_falhas_login,
+    login_bloqueado,
+    registrar_falha_login,
+    usuario_atual,
+)
 
 bp = Blueprint("auth", __name__)
 
@@ -27,13 +36,25 @@ def login():
 
     if request.method == "POST":
         login_informado = (request.form.get("usuario") or "").strip()
+        endereco_ip = request.remote_addr or ""
+        if login_bloqueado(login_informado, endereco_ip):
+            flash("Muitas tentativas de acesso. Aguarde 15 minutos e tente novamente.", "danger")
+            return render_template(
+                "auth/login.html", usuario_informado=login_informado, proximo=proximo
+            ), 429
+
         usuario = autenticar(login_informado, request.form.get("senha"))
         if usuario is None:
+            bloqueado = registrar_falha_login(login_informado, endereco_ip)
             # Mensagem generica: nao revela se o usuario existe.
-            flash("Usuario ou senha invalidos.", "danger")
+            if bloqueado:
+                flash("Muitas tentativas de acesso. Aguarde 15 minutos e tente novamente.", "danger")
+            else:
+                flash("Usuario ou senha invalidos.", "danger")
             return render_template("auth/login.html", usuario_informado=login_informado,
-                                   proximo=proximo)
+                                   proximo=proximo), (429 if bloqueado else 200)
 
+        limpar_falhas_login(login_informado, endereco_ip)
         iniciar_sessao(usuario)
         flash("Bem-vindo(a), %s!" % usuario["nome"], "success")
         return redirect(_destino_seguro(request.form.get("proximo")))

@@ -1,6 +1,9 @@
 """Fabrica da aplicacao Flask do sistema Ojuara."""
 
+import os
+
 from flask import Flask, render_template
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import Config
 from .utils import FORMAS_PAGAMENTO, TIPOS_MOVIMENTACAO, registra_filtros
@@ -9,6 +12,16 @@ from .utils import FORMAS_PAGAMENTO, TIPOS_MOVIMENTACAO, registra_filtros
 def create_app(config_object=Config):
     app = Flask(__name__)
     app.config.from_object(config_object)
+
+    if app.config.get("PRODUCAO"):
+        segredo = os.environ.get("OJUARA_SECRET_KEY", "")
+        if len(segredo) < 32 or segredo == "ojuara-dev-secret-key":
+            raise RuntimeError(
+                "OJUARA_SECRET_KEY precisa ter ao menos 32 caracteres em producao."
+            )
+        # O servidor escuta apenas em localhost; o unico proxy esperado e o
+        # cloudflared local, que informa protocolo, host e IP do visitante.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     registra_filtros(app)
 
@@ -83,6 +96,20 @@ def create_app(config_object=Config):
             ),
             500,
         )
+
+    @app.after_request
+    def cabecalhos_seguranca(resposta):
+        resposta.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resposta.headers.setdefault("X-Frame-Options", "DENY")
+        resposta.headers.setdefault("Referrer-Policy", "same-origin")
+        resposta.headers.setdefault(
+            "Permissions-Policy", "camera=(self), microphone=(), geolocation=()"
+        )
+        if app.config.get("PRODUCAO"):
+            resposta.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
+        return resposta
 
     @app.context_processor
     def injeta_globais():

@@ -23,6 +23,19 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE INDEX IF NOT EXISTS idx_usuarios_login ON usuarios (usuario);
 
+-- Limitacao persistente de tentativas de login. A chave e um hash de
+-- usuario + IP, evitando armazenar esses dados em texto puro nesta tabela.
+CREATE TABLE IF NOT EXISTS tentativas_login (
+    chave         TEXT PRIMARY KEY,
+    tentativas    INTEGER NOT NULL DEFAULT 0,
+    primeira_em   TEXT    NOT NULL,
+    ultima_em     TEXT    NOT NULL,
+    bloqueado_ate TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_tentativas_login_bloqueio
+    ON tentativas_login (bloqueado_ate);
+
 -- Vendedores -----------------------------------------------------------------
 -- Cadastro completo por seguranca juridica/compliance: documentos e endereco
 -- ficam registrados junto do vendedor, nao apenas nome e telefone.
