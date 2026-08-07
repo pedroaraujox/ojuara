@@ -18,7 +18,9 @@ do domínio e não crie um proxy na Cloudflare.
 
 ## 2. Diretórios persistentes
 
-No terminal da Contabo, crie os diretórios usados pela Stack:
+A Stack cria automaticamente os diretórios usados pelo Ojuara e ajusta suas
+permissões com o serviço temporário `preparar_diretorios`. Se preferir
+prepará-los manualmente, use:
 
 ```bash
 sudo install -d -m 750 -o 10001 -g 10001 /opt/ojuara/data
@@ -50,8 +52,7 @@ banco vazio com apenas o superadministrador.
 ## 4. Rede do Nginx Proxy Manager
 
 No Portainer, abra **Networks** e copie o nome exato da rede usada pelo Nginx
-Proxy Manager. A Stack pressupõe `nginx-proxy-manager_default`, mas o nome pode
-ser diferente na instalação existente.
+Proxy Manager. Nesta Contabo, a rede identificada é `nginx-proxy_default`.
 
 ## 5. Stack no Portainer
 

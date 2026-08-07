@@ -1,4 +1,28 @@
 services:
+  preparar_diretorios:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ojuara:latest
+    user: "0:0"
+    command:
+      - python
+      - -c
+      - >-
+        import os;
+        [os.chown(caminho, 10001, 10001) for caminho in ('/app/data', '/app/backups')];
+        [os.chmod(caminho, 0o750) for caminho in ('/app/data', '/app/backups')]
+    volumes:
+      - ${OJUARA_DATA_DIR:-/opt/ojuara/data}:/app/data
+      - ${OJUARA_BACKUP_DIR:-/opt/ojuara/backups}:/app/backups
+    network_mode: none
+    restart: "no"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+
   ojuara:
     build:
       context: .
@@ -6,6 +30,9 @@ services:
     image: ojuara:latest
     restart: unless-stopped
     init: true
+    depends_on:
+      preparar_diretorios:
+        condition: service_completed_successfully
     environment:
       OJUARA_AMBIENTE: producao
       OJUARA_SEED: "0"
@@ -67,4 +94,4 @@ services:
 networks:
   proxy:
     external: true
-    name: ${NPM_NETWORK:-nginx-proxy-manager_default}
+    name: ${NPM_NETWORK:-nginx-proxy_default}
