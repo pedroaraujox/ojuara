@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block titulo %}Painel{% endblock %}
+{% block cabecalho %}Ola, {{ usuario.nome }}{% endblock %}
+{% block subcabecalho %}Seus numeros de {{ rotulo_mes }}{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('vendas.nova') }}" class="btn btn-marca btn-sm">
+    <i class="bi bi-bag-plus me-1"></i>Registrar venda
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+
+{% include "_aniversario_alerta.html" %}
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Vendi no mes</div>
+      <div class="kpi-valor">{{ indicadores.total_mes | brl }}</div>
+      <small class="text-secondary">
+        {{ indicadores.vendas_mes }} venda(s) &middot; {{ indicadores.pecas_mes }} pecas
+      </small>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-ok h-100"><div class="card-body">
+      <div class="kpi-rotulo">Minha comissao</div>
+      <div class="kpi-valor">{{ indicadores.comissao_mes | brl }}</div>
+      <small class="text-secondary">acumulada no mes</small>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-info h-100"><div class="card-body">
+      <div class="kpi-rotulo">Ticket medio</div>
+      <div class="kpi-valor">{{ indicadores.ticket_medio | brl }}</div>
+      <small class="text-secondary">por venda</small>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Meu perfil</div>
+      <div class="kpi-valor h4 mb-1">
+        <span class="badge bg-{{ PAPEIS[usuario.papel].cor }}">{{ PAPEIS[usuario.papel].rotulo }}</span>
+      </div>
+      <small class="text-secondary">
+        <a href="{{ url_for('relatorios.comissoes') }}" class="text-decoration-none">
+          Ver minha comissao por mes
+        </a>
+      </small>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-bag-check me-2 text-marca"></i>Minhas ultimas vendas</span>
+        <a href="{{ url_for('vendas.listar') }}" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th><th>Data</th><th>Cliente</th><th>Pagamento</th>
+              <th class="text-end">Total</th><th class="text-end">Comissao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for venda in minhas_vendas %}
+              <tr class="{{ 'text-decoration-line-through text-secondary' if venda.cancelada }}">
+                <td><a href="{{ url_for('vendas.detalhe', venda_id=venda.id) }}">{{ venda.id }}</a></td>
+                <td>{{ venda.data | data_br }}</td>
+                <td>{{ venda.cliente }}</td>
+                <td>
+                  <span class="badge bg-marca-clara text-marca">
+                    {{ FORMAS_PAGAMENTO[venda.forma_pagamento] }}
+                    {%- if venda.forma_pagamento == 'CREDIARIO' %} {{ venda.parcelas }}x{% endif %}
+                  </span>
+                </td>
+                <td class="text-end fw-semibold">{{ venda.total | brl }}</td>
+                <td class="text-end text-success">{{ venda.comissao_valor | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-secondary py-4">
+                Voce ainda nao registrou vendas.
+                <a href="{{ url_for('vendas.nova') }}">Registrar a primeira</a>.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-5">
+    {% include "_aniversario_card.html" %}
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <span><i class="bi bi-calendar2-week me-2 text-marca"></i>Parcelas a receber</span>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for parcela in proximas_parcelas %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <a href="{{ url_for('clientes.detalhe', cliente_id=parcela.cliente_id) }}"
+                 class="text-decoration-none">{{ parcela.cliente }}</a>
+              <div class="small text-secondary">
+                Parcela {{ parcela.numero }}/{{ parcela.total_parcelas }} &middot;
+                venc. {{ parcela.vencimento | data_br }}
+              </div>
+            </div>
+            <span class="badge {{ 'badge-vencida' if parcela.vencimento < hoje else 'bg-secondary' }}">
+              {{ parcela.valor | brl }}
+            </span>
+          </li>
+        {% else %}
+          <li class="list-group-item text-secondary text-center py-4">Nada a receber.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Atencao no estoque
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for produto in estoque_baixo %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <span class="codigo">{{ produto.codigo_fabricante }}</span>
+              <div class="small text-secondary">{{ produto.nome }} {{ produto.tamanho }}</div>
+            </div>
+            <span class="badge {{ 'bg-danger' if produto.estoque == 0 else 'bg-warning text-dark' }}">
+              {{ produto.estoque }} un
+            </span>
+          </li>
+        {% else %}
+          <li class="list-group-item text-secondary text-center py-4">
+            Nenhum produto abaixo do minimo.
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

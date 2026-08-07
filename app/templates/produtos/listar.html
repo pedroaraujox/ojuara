@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block titulo %}Catalogo de produtos{% endblock %}
+{% block cabecalho %}Catalogo de produtos{% endblock %}
+{% block subcabecalho %}
+  {{ totais.itens }} item(ns) &middot; {{ totais.pecas }} pecas
+  {%- if pode('custos.ver') %} &middot; custo {{ totais.custo | brl }}
+  &middot; venda {{ totais.venda | brl }}{% endif %}
+{% endblock %}
+
+{% block acoes %}
+  {% if pode('estoque.movimentar') %}
+    <a href="{{ url_for('estoque.entrada') }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-box-arrow-in-down me-1"></i>Entrada de NF
+    </a>
+  {% endif %}
+  {% if pode('produtos.editar') %}
+    <a href="{{ url_for('produtos.novo') }}" class="btn btn-marca btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Novo produto
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-6">
+        <label class="form-label small" for="busca">Buscar por codigo, nome ou cor</label>
+        <input type="text" class="form-control" id="busca" name="busca" value="{{ busca }}"
+               placeholder="Ex.: LIN-1001 ou Sutia Renda">
+      </div>
+      <div class="col-8 col-md-4">
+        <label class="form-label small" for="situacao">Situacao</label>
+        <select class="form-select" id="situacao" name="situacao">
+          <option value="todos"    {{ 'selected' if situacao == 'todos' }}>Ativos</option>
+          <option value="baixo"    {{ 'selected' if situacao == 'baixo' }}>Estoque no minimo ou abaixo</option>
+          <option value="zerado"   {{ 'selected' if situacao == 'zerado' }}>Estoque zerado</option>
+          <option value="inativos" {{ 'selected' if situacao == 'inativos' }}>Inativos</option>
+        </select>
+      </div>
+      <div class="col-4 col-md-2">
+        <button type="submit" class="btn btn-marca w-100"><i class="bi bi-search"></i> Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover tabela-compacta mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Codigo</th><th>Produto</th><th>Tam.</th><th>Cor</th>
+          {% if pode('custos.ver') %}<th class="text-end">Custo</th>{% endif %}
+          <th class="text-end">Venda</th>
+          {% if pode('custos.ver') %}<th class="text-end">Margem</th>{% endif %}
+          <th class="text-center">Estoque</th>
+          <th class="text-end">Acoes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for produto in produtos %}
+          <tr class="{{ 'table-secondary' if not produto.ativo }}">
+            <td><span class="codigo">{{ produto.codigo_fabricante }}</span></td>
+            <td>
+              <a href="{{ url_for('produtos.detalhe', produto_id=produto.id) }}"
+                 class="text-decoration-none fw-semibold">{{ produto.nome }}</a>
+              {% if not produto.ativo %}<span class="badge bg-secondary ms-1">inativo</span>{% endif %}
+            </td>
+            <td>{{ produto.tamanho or '-' }}</td>
+            <td>{{ produto.cor or '-' }}</td>
+            {% if pode('custos.ver') %}
+              <td class="text-end">{{ produto.preco_custo | brl }}</td>
+            {% endif %}
+            <td class="text-end fw-semibold">{{ produto.preco_venda | brl }}</td>
+            {% if pode('custos.ver') %}
+              <td class="text-end text-success">
+                {{ (produto.preco_venda - produto.preco_custo) | brl }}
+              </td>
+            {% endif %}
+            <td class="text-center">
+              {% if produto.estoque == 0 %}
+                <span class="badge bg-danger">0</span>
+              {% elif produto.estoque <= produto.estoque_minimo %}
+                <span class="badge bg-warning text-dark">{{ produto.estoque }}</span>
+              {% else %}
+                <span class="badge bg-success">{{ produto.estoque }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{{ url_for('produtos.detalhe', produto_id=produto.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="Ficha"><i class="bi bi-eye"></i></a>
+              {% if pode('produtos.editar') %}
+                <a href="{{ url_for('produtos.editar', produto_id=produto.id) }}"
+                   class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                <form method="post" action="{{ url_for('produtos.alternar', produto_id=produto.id) }}"
+                      class="d-inline"
+                      data-confirmar="Confirma {{ 'reativar' if not produto.ativo else 'desativar' }} este produto?">
+                  <button class="btn btn-sm btn-outline-{{ 'success' if not produto.ativo else 'danger' }}"
+                          title="{{ 'Reativar' if not produto.ativo else 'Desativar' }}">
+                    <i class="bi bi-{{ 'arrow-counterclockwise' if not produto.ativo else 'slash-circle' }}"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="{{ 9 if pode('custos.ver') else 7 }}"
+                  class="text-center text-secondary py-5">
+            Nenhum produto encontrado.
+            {% if pode('produtos.editar') %}
+              <a href="{{ url_for('produtos.novo') }}">Cadastrar o primeiro</a>.
+            {% endif %}
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

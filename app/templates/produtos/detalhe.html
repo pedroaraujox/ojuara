@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block titulo %}{{ produto.codigo_fabricante }}{% endblock %}
+{% block cabecalho %}{{ produto.nome }}{% endblock %}
+{% block subcabecalho %}
+  Codigo do produto {{ produto.codigo_fabricante }}
+  {%- if produto.tamanho %} &middot; tam. {{ produto.tamanho }}{% endif %}
+  {%- if produto.cor %} &middot; {{ produto.cor }}{% endif %}
+{% endblock %}
+
+{% block acoes %}
+  {% if pode('produtos.editar') %}
+    <a href="{{ url_for('produtos.editar', produto_id=produto.id) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Editar
+    </a>
+  {% endif %}
+  <a href="{{ url_for('produtos.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Estoque atual</div>
+      <div class="kpi-valor">{{ produto.estoque }}</div>
+      <small class="text-secondary">minimo: {{ produto.estoque_minimo }}</small>
+    </div></div>
+  </div>
+  {% if pode('custos.ver') %}
+    <div class="col-6 col-lg-3">
+      <div class="card kpi kpi-info h-100"><div class="card-body">
+        <div class="kpi-rotulo">Valor em estoque (custo)</div>
+        <div class="kpi-valor">{{ (produto.estoque * produto.preco_custo) | brl }}</div>
+        <small class="text-secondary">venda: {{ (produto.estoque * produto.preco_venda) | brl }}</small>
+      </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi kpi-ok h-100"><div class="card-body">
+        <div class="kpi-rotulo">Margem por peca</div>
+        <div class="kpi-valor">{{ (produto.preco_venda - produto.preco_custo) | brl }}</div>
+        <small class="text-secondary">
+          custo {{ produto.preco_custo | brl }} &rarr; venda {{ produto.preco_venda | brl }}
+        </small>
+      </div></div>
+    </div>
+  {% else %}
+    <div class="col-6 col-lg-3">
+      <div class="card kpi kpi-ok h-100"><div class="card-body">
+        <div class="kpi-rotulo">Preco de venda</div>
+        <div class="kpi-valor">{{ produto.preco_venda | brl }}</div>
+        <small class="text-secondary">valor de etiqueta</small>
+      </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card kpi kpi-info h-100"><div class="card-body">
+        <div class="kpi-rotulo">Tamanho e cor</div>
+        <div class="kpi-valor h4 mb-1">{{ produto.tamanho or '-' }}</div>
+        <small class="text-secondary">{{ produto.cor or 'sem cor cadastrada' }}</small>
+      </div></div>
+    </div>
+  {% endif %}
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Pecas ja vendidas</div>
+      <div class="kpi-valor">{{ vendido }}</div>
+      <small class="text-secondary">no catalogo desde {{ produto.criado_em | data_br }}</small>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-4">
+    {% if pode('estoque.movimentar') %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Entrada rapida</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('produtos.entrada', produto_id=produto.id) }}">
+          <div class="mb-2">
+            <label class="form-label" for="quantidade">Quantidade recebida</label>
+            <input type="number" min="1" step="1" class="form-control" id="quantidade"
+                   name="quantidade" value="1" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label" for="numero_nf">Numero da NF *</label>
+            <input type="text" class="form-control" id="numero_nf" name="numero_nf" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="observacao">Observacao</label>
+            <input type="text" class="form-control" id="observacao" name="observacao">
+          </div>
+          <button class="btn btn-success w-100"><i class="bi bi-plus-lg me-1"></i>Lancar entrada</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-lightning me-2 text-marca"></i>Atalhos</div>
+      <div class="list-group list-group-flush">
+        {% if pode('estoque.movimentar') %}
+          <a class="list-group-item list-group-item-action" href="{{ url_for('estoque.baixa') }}">
+            <i class="bi bi-box-arrow-up me-2 text-warning"></i>Dar baixa em lote
+          </a>
+          <a class="list-group-item list-group-item-action" href="{{ url_for('estoque.devolucao') }}">
+            <i class="bi bi-arrow-return-left me-2 text-info"></i>Devolver ao fornecedor
+          </a>
+        {% endif %}
+        <a class="list-group-item list-group-item-action"
+           href="{{ url_for('estoque.movimentacoes', busca=produto.codigo_fabricante) }}">
+          <i class="bi bi-clock-history me-2"></i>Historico completo do codigo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-8">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-grid-3x3-gap me-2 text-marca"></i>Grade do modelo {{ produto.codigo_fabricante }}</span>
+        {% if pode('produtos.editar') %}
+          <a href="{{ url_for('produtos.novo', copiar_de=produto.id) }}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-plus-lg me-1"></i>Adicionar tamanho
+          </a>
+        {% endif %}
+      </div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Tamanho</th><th>Cor</th><th class="text-center">Estoque</th>
+              <th class="text-end">Venda</th><th class="text-end">Acoes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-light">
+              <td class="fw-semibold">{{ produto.tamanho or '(sem tamanho)' }}</td>
+              <td>{{ produto.cor or '-' }}</td>
+              <td class="text-center">
+                <span class="badge {{ 'bg-danger' if produto.estoque == 0 else ('bg-warning text-dark' if produto.estoque <= produto.estoque_minimo else 'bg-success') }}">
+                  {{ produto.estoque }}
+                </span>
+              </td>
+              <td class="text-end">{{ produto.preco_venda | brl }}</td>
+              <td class="text-end text-secondary small">esta peca</td>
+            </tr>
+            {% for irmao in grade %}
+              <tr>
+                <td>{{ irmao.tamanho or '(sem tamanho)' }}</td>
+                <td>{{ irmao.cor or '-' }}</td>
+                <td class="text-center">
+                  <span class="badge {{ 'bg-danger' if irmao.estoque == 0 else ('bg-warning text-dark' if irmao.estoque <= irmao.estoque_minimo else 'bg-success') }}">
+                    {{ irmao.estoque }}
+                  </span>
+                </td>
+                <td class="text-end">{{ irmao.preco_venda | brl }}</td>
+                <td class="text-end">
+                  <a href="{{ url_for('produtos.detalhe', produto_id=irmao.id) }}"
+                     class="btn btn-sm btn-outline-secondary">Ver ficha</a>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="text-center text-secondary small py-3">
+                Nenhum outro tamanho cadastrado para este codigo ainda.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history me-2 text-marca"></i>Movimentacoes recentes</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Data</th><th>Tipo</th><th class="text-center">Qtd</th>
+              <th class="text-center">Saldo</th><th>Documento</th><th>Observacao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mov in movimentacoes %}
+              <tr>
+                <td class="text-nowrap small">{{ mov.data | data_hora_br }}</td>
+                <td>{{ TIPOS_MOVIMENTACAO.get(mov.tipo, mov.tipo) }}</td>
+                <td class="text-center fw-semibold
+                           {{ 'text-danger' if mov.tipo in ['VENDA','BAIXA','DEVOLUCAO_FORNECEDOR']
+                              else 'text-success' }}">
+                  {{ '-' if mov.tipo in ['VENDA','BAIXA','DEVOLUCAO_FORNECEDOR'] else '+' }}{{ mov.quantidade }}
+                </td>
+                <td class="text-center text-secondary">
+                  {{ mov.saldo_anterior }} &rarr; <strong>{{ mov.saldo_posterior }}</strong>
+                </td>
+                <td class="small">
+                  {% if mov.nf_numero %}
+                    <a href="{{ url_for('estoque.nota_fiscal_detalhe', nota_id=mov.nota_fiscal_id) }}">
+                      NF {{ mov.nf_numero }}
+                    </a>
+                  {% else %}
+                    {{ mov.documento or '-' }}
+                  {% endif %}
+                </td>
+                <td class="small text-secondary">{{ mov.observacao or '-' }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-secondary py-4">Sem movimentacoes.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

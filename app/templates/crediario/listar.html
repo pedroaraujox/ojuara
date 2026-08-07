@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block titulo %}Crediario{% endblock %}
+{% block cabecalho %}Crediario a receber{% endblock %}
+{% block subcabecalho %}
+  {{ totais.qtd }} parcela(s) no filtro &middot; {{ totais.valor | brl }}
+  {%- if totais.vencido %} &middot; <span class="text-danger">{{ totais.vencido | brl }} em atraso</span>{% endif %}
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('vendas.nova') }}" class="btn btn-marca btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Nova venda
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label small" for="situacao">Situacao</label>
+        <select class="form-select" id="situacao" name="situacao">
+          <option value="aberto"  {{ 'selected' if situacao == 'aberto' }}>Em aberto</option>
+          <option value="vencido" {{ 'selected' if situacao == 'vencido' }}>Somente vencidas</option>
+          <option value="pago"    {{ 'selected' if situacao == 'pago' }}>Pagas</option>
+          <option value="todos"   {{ 'selected' if situacao == 'todos' }}>Todas</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label small" for="cliente_id">Cliente</label>
+        <select class="form-select" id="cliente_id" name="cliente_id">
+          <option value="">Todos</option>
+          {% for cliente in clientes %}
+            <option value="{{ cliente.id }}" {{ 'selected' if cliente_id == cliente.id|string }}>
+              {{ cliente.nome }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label small" for="busca">Buscar por nome ou telefone</label>
+        <input type="text" class="form-control" id="busca" name="busca" value="{{ busca }}">
+      </div>
+      <div class="col-12 col-xl-2 d-flex gap-2">
+        <button type="submit" class="btn btn-marca flex-grow-1"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{{ url_for('crediario.listar') }}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover tabela-compacta mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Cliente</th><th>Telefone</th><th>Venda</th><th>Parcela</th>
+          <th>Vencimento</th><th class="text-end">Valor</th><th>Situacao</th>
+          <th class="text-end">Acao</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for parcela in parcelas %}
+          <tr class="{{ 'table-danger' if not parcela.pago and parcela.vencimento < hoje }}">
+            <td>
+              <a href="{{ url_for('clientes.detalhe', cliente_id=parcela.cliente_id) }}"
+                 class="text-decoration-none fw-semibold">{{ parcela.cliente }}</a>
+            </td>
+            <td class="small">{{ parcela.telefone or '-' }}</td>
+            <td><a href="{{ url_for('vendas.detalhe', venda_id=parcela.venda_id) }}">#{{ parcela.venda_id }}</a></td>
+            <td>{{ parcela.numero }}/{{ parcela.total_parcelas }}</td>
+            <td class="text-nowrap">{{ parcela.vencimento | data_br }}</td>
+            <td class="text-end fw-semibold">{{ parcela.valor | brl }}</td>
+            <td>
+              {% if parcela.pago %}
+                <span class="badge bg-success">Pago em {{ parcela.data_pagamento | data_br }}</span>
+              {% elif parcela.vencimento < hoje %}
+                <span class="badge badge-vencida">Vencida</span>
+              {% else %}
+                <span class="badge bg-secondary">Em aberto</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if parcela.pago %}
+                {% if pode('crediario.estornar') %}
+                  <form method="post" action="{{ url_for('crediario.estornar', parcela_id=parcela.id) }}"
+                        class="d-inline" data-confirmar="Estornar o pagamento desta parcela?">
+                    <button class="btn btn-sm btn-outline-secondary">Estornar</button>
+                  </form>
+                {% else %}
+                  <span class="text-secondary small">-</span>
+                {% endif %}
+              {% elif pode('crediario.receber') %}
+                <form method="post" action="{{ url_for('crediario.pagar', parcela_id=parcela.id) }}"
+                      class="d-inline">
+                  <input type="hidden" name="data_pagamento" value="{{ hoje }}">
+                  <button class="btn btn-sm btn-success">
+                    <i class="bi bi-cash me-1"></i>Receber
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="text-center text-secondary py-5">
+            Nenhuma parcela encontrada com esses filtros.
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

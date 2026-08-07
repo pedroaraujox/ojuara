@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block titulo %}Entrada de NF{% endblock %}
+{% block cabecalho %}Entrada de NF{% endblock %}
+{% block subcabecalho %}Selecione no catalogo as variacoes recebidas nesta nota fiscal.{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('estoque.notas_fiscais', tipo='ENTRADA') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-card-list me-1"></i>Listagem de Notas Fiscais
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<form method="post" action="{{ url_for('estoque.entrada') }}" id="form-entrada-nf">
+  <div class="card mb-3">
+    <div class="card-header"><i class="bi bi-receipt me-2 text-marca"></i>Dados da Nota Fiscal</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold" for="numero_nf">Numero da NF</label>
+          <input type="text" class="form-control" id="numero_nf" name="numero_nf"
+                 required placeholder="Ex.: 000123" autocomplete="off" autofocus
+                 inputmode="numeric" pattern="[0-9]+" aria-describedby="ajuda-numero-nf">
+          <div class="form-text" id="ajuda-numero-nf">Digite somente numeros.</div>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="fornecedor">Fornecedor</label>
+          <input type="text" class="form-control" id="fornecedor" name="fornecedor">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="data_nf">Data da NF</label>
+          <input type="date" class="form-control" id="data_nf" name="data_nf" value="{{ HOJE }}">
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label" for="motivo">Motivo</label>
+          <select class="form-select" id="motivo" name="motivo">
+            <option value="">Selecione...</option>
+            {% for motivo in motivos %}<option value="{{ motivo }}">{{ motivo }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-lg-6">
+          <label class="form-label" for="observacao">Observacao</label>
+          <input type="text" class="form-control" id="observacao" name="observacao"
+                 placeholder="Detalhe livre (opcional)">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+            <span class="fw-semibold"><i class="bi bi-box-seam me-2 text-marca"></i>Produtos do catalogo</span>
+            <div class="input-group input-group-sm busca-catalogo-nf">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="search" class="form-control" id="busca-produto-nf"
+                     placeholder="Buscar por codigo ou nome" aria-label="Buscar por codigo ou nome">
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-2" id="lista-produtos-nf">
+            {% for produto in catalogo_referencia %}
+              <div class="col-12 col-md-6 produto-catalogo-nf"
+                   data-busca="{{ (produto.codigo_fabricante ~ ' ' ~ produto.nome ~ ' ' ~ produto.tamanho ~ ' ' ~ produto.cor) | lower }}">
+                <button type="button" class="produto-selecao-nf w-100 text-start"
+                        data-id="{{ produto.id }}"
+                        data-codigo="{{ produto.codigo_fabricante | e }}"
+                        data-nome="{{ produto.nome | e }}"
+                        data-tamanho="{{ (produto.tamanho or '') | e }}"
+                        data-cor="{{ (produto.cor or '') | e }}">
+                  <span class="d-flex justify-content-between align-items-start gap-2">
+                    <span>
+                      <span class="codigo d-block">{{ produto.codigo_fabricante }}</span>
+                      <strong class="d-block">{{ produto.nome }}</strong>
+                    </span>
+                    <i class="bi bi-plus-circle text-marca fs-5"></i>
+                  </span>
+                  <span class="d-flex flex-wrap gap-1 mt-2">
+                    <span class="badge text-bg-light border">Tam. {{ produto.tamanho or '-' }}</span>
+                    <span class="badge text-bg-light border">{{ produto.cor or 'Sem cor' }}</span>
+                  </span>
+                </button>
+              </div>
+            {% else %}
+              <div class="col-12 text-center text-secondary py-5">
+                Nenhum produto ativo cadastrado no catalogo.
+              </div>
+            {% endfor %}
+          </div>
+          <div id="nenhum-produto-nf" class="text-center text-secondary py-5 d-none">
+            <i class="bi bi-search d-block fs-3 mb-2"></i>
+            Nenhum produto encontrado para esta busca.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="card painel-itens-nf">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-check2-square me-2 text-marca"></i>Itens da NF</span>
+          <span class="badge text-bg-secondary" id="total-itens-nf">0 peca(s)</span>
+        </div>
+        <div class="list-group list-group-flush" id="itens-selecionados-nf">
+          <div class="list-group-item text-center text-secondary py-4" id="nf-sem-itens">
+            Selecione um produto do catalogo.
+          </div>
+        </div>
+        <div id="campos-itens-nf"></div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-success w-100 fw-semibold" id="confirmar-entrada-nf" disabled>
+            <i class="bi bi-check2-circle me-1"></i>Confirmar Entrada de NF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="modal fade" id="modal-quantidade-nf" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5">Quantidade recebida</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="produto-modal-nf" class="mb-3"></div>
+        <label class="form-label fw-semibold" for="quantidade-modal-nf">Quantidade</label>
+        <input type="number" class="form-control form-control-lg" id="quantidade-modal-nf"
+               min="1" step="1" value="1" inputmode="numeric">
+        <div class="invalid-feedback">Informe uma quantidade maior que zero.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="adicionar-produto-nf">Adicionar a NF</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var selecionados = new Map();
+  var produtoAtual = null;
+  var modalElemento = document.getElementById("modal-quantidade-nf");
+  var modal = new bootstrap.Modal(modalElemento);
+  var quantidade = document.getElementById("quantidade-modal-nf");
+  var resumo = document.getElementById("itens-selecionados-nf");
+  var campos = document.getElementById("campos-itens-nf");
+  var total = document.getElementById("total-itens-nf");
+  var confirmar = document.getElementById("confirmar-entrada-nf");
+  var numeroNf = document.getElementById("numero_nf");
+
+  numeroNf.addEventListener("input", function () {
+    numeroNf.value = numeroNf.value.replace(/\D/g, "");
+  });
+
+  function escapar(texto) {
+    var elemento = document.createElement("div");
+    elemento.textContent = texto || "";
+    return elemento.innerHTML;
+  }
+
+  function renderizar() {
+    resumo.innerHTML = "";
+    campos.innerHTML = "";
+    var totalPecas = 0;
+    if (!selecionados.size) {
+      resumo.innerHTML = '<div class="list-group-item text-center text-secondary py-4" id="nf-sem-itens">Selecione um produto do catalogo.</div>';
+    }
+    selecionados.forEach(function (item) {
+      totalPecas += item.quantidade;
+      var linha = document.createElement("div");
+      linha.className = "list-group-item";
+      linha.innerHTML = '<div class="d-flex justify-content-between gap-2">' +
+        '<div><span class="codigo">' + escapar(item.codigo) + '</span><strong class="d-block">' + escapar(item.nome) + '</strong>' +
+        '<small class="text-secondary">Tam. ' + escapar(item.tamanho || "-") + ' · ' + escapar(item.cor || "Sem cor") + '</small></div>' +
+        '<div class="text-end"><strong>' + item.quantidade + ' un</strong><button type="button" class="btn btn-sm btn-link text-danger d-block p-0 ms-auto remover-item-nf" data-id="' + item.id + '">Remover</button></div></div>';
+      resumo.appendChild(linha);
+
+      [["codigo[]", item.codigo], ["tamanho[]", item.tamanho], ["cor[]", item.cor], ["quantidade[]", item.quantidade]].forEach(function (par) {
+        var input = document.createElement("input");
+        input.type = "hidden"; input.name = par[0]; input.value = par[1];
+        campos.appendChild(input);
+      });
+    });
+    total.textContent = totalPecas + " peca(s)";
+    confirmar.disabled = selecionados.size === 0;
+  }
+
+  document.querySelectorAll(".produto-selecao-nf").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      produtoAtual = {
+        id: botao.dataset.id, codigo: botao.dataset.codigo, nome: botao.dataset.nome,
+        tamanho: botao.dataset.tamanho, cor: botao.dataset.cor
+      };
+      document.getElementById("produto-modal-nf").innerHTML =
+        '<span class="codigo">' + escapar(produtoAtual.codigo) + '</span><strong class="d-block">' + escapar(produtoAtual.nome) + '</strong>' +
+        '<span class="text-secondary">Tam. ' + escapar(produtoAtual.tamanho || "-") + ' · ' + escapar(produtoAtual.cor || "Sem cor") + '</span>';
+      quantidade.value = selecionados.has(produtoAtual.id) ? selecionados.get(produtoAtual.id).quantidade : 1;
+      quantidade.classList.remove("is-invalid");
+      modal.show();
+    });
+  });
+
+  modalElemento.addEventListener("shown.bs.modal", function () { quantidade.focus(); quantidade.select(); });
+  document.getElementById("adicionar-produto-nf").addEventListener("click", function () {
+    var valor = parseInt(quantidade.value, 10);
+    if (!produtoAtual || !valor || valor < 1) { quantidade.classList.add("is-invalid"); return; }
+    produtoAtual.quantidade = valor;
+    selecionados.set(produtoAtual.id, Object.assign({}, produtoAtual));
+    renderizar(); modal.hide();
+  });
+  quantidade.addEventListener("keydown", function (evento) {
+    if (evento.key === "Enter") { evento.preventDefault(); document.getElementById("adicionar-produto-nf").click(); }
+  });
+  resumo.addEventListener("click", function (evento) {
+    var botao = evento.target.closest(".remover-item-nf");
+    if (botao) { selecionados.delete(botao.dataset.id); renderizar(); }
+  });
+
+  document.getElementById("busca-produto-nf").addEventListener("input", function (evento) {
+    var termo = evento.target.value.trim().toLocaleLowerCase("pt-BR");
+    var visiveis = 0;
+    document.querySelectorAll(".produto-catalogo-nf").forEach(function (item) {
+      var mostrar = item.dataset.busca.indexOf(termo) !== -1;
+      item.classList.toggle("d-none", !mostrar);
+      if (mostrar) visiveis += 1;
+    });
+    document.getElementById("nenhum-produto-nf").classList.toggle("d-none", visiveis !== 0);
+  });
+})();
+</script>
+{% endblock %}

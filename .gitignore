@@ -1,0 +1,43 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Banco de dados local
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups e dados reais
+backups/
+*.backup
+*.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Configuracoes locais e segredos
+.env
+.env.*
+!.env.example
+instance/
+*.pem
+*.key
+*.credentials.json
+
+# Execucao local, tunel e ferramentas
+*.log
+*.pid
+*.traineddata
+.claude/
+.cloudflared/
+
+# Editores / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

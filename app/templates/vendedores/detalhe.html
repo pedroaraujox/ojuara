@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block titulo %}{{ vendedor.nome }}{% endblock %}
+{% block cabecalho %}{{ vendedor.nome }}{% endblock %}
+{% block subcabecalho %}
+  Comissao de {{ '%.1f' % vendedor.percentual_comissao }}%
+  {%- if vendedor.telefone %} &middot; {{ vendedor.telefone }}{% endif %}
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('vendedores.editar', vendedor_id=vendedor.id) }}"
+     class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>Editar</a>
+  <a href="{{ url_for('vendedores.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3">
+  <div class="col-12 col-xl-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-marca"></i>Dados cadastrais</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5">Nascimento</dt>
+          <dd class="col-7">{{ vendedor.data_nascimento | data_br }}</dd>
+          <dt class="col-5">CPF</dt>
+          <dd class="col-7">{{ vendedor.cpf | cpf }}</dd>
+          <dt class="col-5">RG</dt>
+          <dd class="col-7">{{ vendedor.rg or '-' }}</dd>
+          <dt class="col-5">Endereco</dt>
+          <dd class="col-7">
+            {{ vendedor.rua }}, {{ vendedor.numero }} - {{ vendedor.bairro }}<br>
+            {{ vendedor.cidade }}/{{ vendedor.uf }} &middot; CEP {{ vendedor.cep }}
+          </dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-calendar3 me-2 text-marca"></i>Resultado por mes</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Mes</th><th class="text-center">Vendas</th>
+              <th class="text-end">Total</th><th class="text-end">Comissao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for linha in por_mes %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('relatorios.comissoes', mes=linha.competencia) }}"
+                     class="text-decoration-none">{{ rotulo_competencia(linha.competencia) }}</a>
+                </td>
+                <td class="text-center">{{ linha.qtd }}</td>
+                <td class="text-end fw-semibold">{{ linha.total | brl }}</td>
+                <td class="text-end text-success">{{ linha.comissao | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="4" class="text-center text-secondary py-4">Sem vendas registradas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-bag-check me-2 text-marca"></i>Vendas realizadas</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th><th>Data</th><th>Cliente</th><th>Pagto</th>
+              <th class="text-end">Total</th><th class="text-end">Comissao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for venda in vendas %}
+              <tr class="{{ 'text-decoration-line-through text-secondary' if venda.cancelada }}">
+                <td><a href="{{ url_for('vendas.detalhe', venda_id=venda.id) }}">{{ venda.id }}</a></td>
+                <td>{{ venda.data | data_br }}</td>
+                <td>{{ venda.cliente }}</td>
+                <td class="small">{{ FORMAS_PAGAMENTO[venda.forma_pagamento] }}</td>
+                <td class="text-end fw-semibold">{{ venda.total | brl }}</td>
+                <td class="text-end text-success">{{ venda.comissao_valor | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-secondary py-4">Nenhuma venda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

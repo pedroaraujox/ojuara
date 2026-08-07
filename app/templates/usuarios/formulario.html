@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Novo usuario' if novo else 'Editar usuario' }}{% endblock %}
+{% block cabecalho %}{{ 'Novo usuario' if novo else 'Editar usuario' }}{% endblock %}
+{% block subcabecalho %}
+  O perfil define exatamente o que a pessoa enxerga e pode fazer no sistema.
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('usuarios.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<form method="post" class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person me-2 text-marca"></i>Identificacao</div>
+      <div class="card-body row g-3">
+        <div class="col-12 col-md-7">
+          <label class="form-label" for="nome">Nome completo *</label>
+          <input type="text" class="form-control" id="nome" name="nome" required
+                 value="{{ alvo.nome }}">
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="usuario_login">Usuario (login) *</label>
+          <input type="text" class="form-control codigo" id="usuario_login" name="usuario"
+                 required minlength="3" value="{{ alvo.usuario }}"
+                 autocapitalize="none" spellcheck="false" placeholder="ex.: maria.silva">
+          <div class="form-text">Letras, numeros, ponto, hifen e underline.</div>
+        </div>
+        <div class="col-12">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                   {{ 'checked' if alvo.ativo }}>
+            <label class="form-check-label" for="ativo">Usuario ativo (pode entrar no sistema)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-key me-2 text-marca"></i>Senha</div>
+      <div class="card-body row g-3">
+        {% if not novo %}
+          <div class="col-12">
+            <div class="alert alert-info small mb-0">
+              Deixe os dois campos em branco para <strong>manter a senha atual</strong>.
+              Preencher redefine a senha da pessoa.
+            </div>
+          </div>
+        {% endif %}
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="senha">{{ 'Senha *' if novo else 'Nova senha' }}</label>
+          <input type="password" class="form-control" id="senha" name="senha"
+                 {{ 'required' if novo }} minlength="6" autocomplete="new-password">
+          <div class="form-text">Minimo de 6 caracteres.</div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="senha_confirmacao">Confirmar senha</label>
+          <input type="password" class="form-control" id="senha_confirmacao"
+                 name="senha_confirmacao" {{ 'required' if novo }} minlength="6"
+                 autocomplete="new-password">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-shield-lock me-2 text-marca"></i>Perfil de acesso</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label" for="papel">Perfil *</label>
+          <select class="form-select" id="papel" name="papel" required>
+            {% for chave, papel in papeis.items() %}
+              <option value="{{ chave }}" {{ 'selected' if alvo.papel == chave }}>
+                {{ papel.rotulo }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3 d-none" id="bloco-vendedor">
+          <label class="form-label" for="vendedor_id">Vendedor vinculado *</label>
+          <select class="form-select" id="vendedor_id" name="vendedor_id">
+            <option value="">Selecione o cadastro de vendedor...</option>
+            {% for vendedor in vendedores %}
+              <option value="{{ vendedor.id }}"
+                      {{ 'selected' if alvo.vendedor_id and alvo.vendedor_id|string == vendedor.id|string }}>
+                {{ vendedor.nome }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">
+            Define de quem sao as vendas e a comissao que este usuario enxerga.
+          </div>
+        </div>
+
+        {% for chave, papel in papeis.items() %}
+          <div class="descricao-papel d-none" data-papel="{{ chave }}">
+            <div class="border rounded p-3 bg-marca-clara">
+              <span class="badge bg-{{ papel.cor }} mb-2">{{ papel.rotulo }}</span>
+              <p class="small mb-2">{{ papel.descricao }}</p>
+              <dl class="row mb-0 small regra-perfil">
+                {% for area, regra in regras[chave] %}
+                  <dt class="col-4">{{ area }}</dt>
+                  <dd class="col-8 mb-1">{{ regra }}</dd>
+                {% endfor %}
+              </dl>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-marca w-100 fw-semibold">
+      <i class="bi bi-check2 me-1"></i>{{ 'Criar usuario' if novo else 'Salvar alteracoes' }}
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var campoPapel = document.getElementById("papel");
+  var blocoVendedor = document.getElementById("bloco-vendedor");
+  var campoVendedor = document.getElementById("vendedor_id");
+
+  function atualizaPapel() {
+    var papel = campoPapel.value;
+    var ehVendedor = papel === "VENDEDOR";
+
+    blocoVendedor.classList.toggle("d-none", !ehVendedor);
+    campoVendedor.required = ehVendedor;
+    if (!ehVendedor) {
+      campoVendedor.value = "";
+    }
+
+    document.querySelectorAll(".descricao-papel").forEach(function (bloco) {
+      bloco.classList.toggle("d-none", bloco.dataset.papel !== papel);
+    });
+  }
+
+  campoPapel.addEventListener("change", atualizaPapel);
+  atualizaPapel();
+</script>
+{% endblock %}

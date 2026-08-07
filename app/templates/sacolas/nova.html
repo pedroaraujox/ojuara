@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block titulo %}Montar sacola{% endblock %}
+{% block cabecalho %}Montar sacola{% endblock %}
+{% block subcabecalho %}
+  {% if nota %}
+    Produtos disponiveis na NF {{ nota.numero }}
+  {% else %}
+    Escolha primeiro a Nota Fiscal de origem dos produtos
+  {% endif %}
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('sacolas.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+{% if not nota %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-7 col-lg-5">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-receipt me-2 text-marca"></i>Nota fiscal de origem</div>
+        <div class="card-body">
+          <form method="get" action="{{ url_for('sacolas.nova') }}">
+            <label class="form-label fw-semibold" for="nota_fiscal_id">
+              De qual NF os produtos vao sair?
+            </label>
+            <select class="form-select form-select-lg" id="nota_fiscal_id" name="nota_fiscal_id"
+                    onchange="this.form.submit()" autofocus>
+              <option value="">Selecione a NF...</option>
+              {% for opcao in notas_disponiveis %}
+                <option value="{{ opcao.id }}">
+                  NF {{ opcao.numero }}{% if opcao.fornecedor %} - {{ opcao.fornecedor }}{% endif %}
+                  ({{ opcao.data | data_br }})
+                </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">
+              So aparecem NFs de entrada que ainda tem produtos com saldo disponivel.
+            </div>
+          </form>
+          {% if not notas_disponiveis %}
+            <div class="alert alert-warning mt-3 mb-0 small">
+              Nenhuma NF de entrada com saldo disponivel no momento. Lance uma
+              <a href="{{ url_for('estoque.entrada') }}">entrada de estoque</a> primeiro.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-light border d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <span>
+      NF <strong class="text-marca">{{ nota.numero }}</strong>
+      {%- if nota.fornecedor %} &middot; {{ nota.fornecedor }}{% endif %}
+      &middot; escolha os produtos e quantidades para a sacola
+    </span>
+    <a href="{{ url_for('sacolas.nova') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i>Trocar NF
+    </a>
+  </div>
+
+  <form method="post" action="{{ url_for('sacolas.nova') }}" id="form-sacola">
+    <input type="hidden" name="nota_fiscal_id" value="{{ nota.id }}">
+    <div class="row g-3">
+      <div class="col-12 col-xl-8">
+        <div class="card">
+          <div class="card-header">
+            <i class="bi bi-upc-scan me-2 text-marca"></i>Produtos disponiveis nesta NF
+          </div>
+          <div class="table-responsive">
+            <table class="table tabela-compacta align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Codigo</th><th>Produto</th><th>Tam.</th><th>Cor</th>
+                  <th class="text-center">Disponivel</th>
+                  <th style="width: 14%">Quantidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for produto in disponiveis %}
+                  <tr>
+                    <td><span class="codigo">{{ produto.codigo_fabricante }}</span></td>
+                    <td>{{ produto.nome }}</td>
+                    <td>{{ produto.tamanho or '-' }}</td>
+                    <td class="text-secondary small">{{ produto.cor or '-' }}</td>
+                    <td class="text-center">
+                      <span class="badge bg-secondary">{{ produto.disponivel }}</span>
+                    </td>
+                    <td>
+                      <input type="hidden" name="produto_id[]" value="{{ produto.id }}">
+                      <input type="number" class="form-control form-control-sm qtd-sacola"
+                             name="quantidade[]" min="0" max="{{ produto.disponivel }}" step="1"
+                             value="{{ produto.quantidade_digitada }}" placeholder="0">
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="6" class="text-center text-secondary py-4">
+                    Nenhum produto disponivel nesta NF.
+                  </td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer text-end">
+            <span class="fw-semibold">Total selecionado: <span id="total-pecas">0</span> peca(s)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <div class="card">
+          <div class="card-header"><i class="bi bi-person-badge me-2 text-marca"></i>Dados da sacola</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label" for="vendedor_id">Vendedor *</label>
+              <select class="form-select" id="vendedor_id" name="vendedor_id" required>
+                <option value="">Selecione o vendedor...</option>
+                {% for vendedor in vendedores %}
+                  <option value="{{ vendedor.id }}"
+                          {{ 'selected' if dados.vendedor_id|string == vendedor.id|string }}>
+                    {{ vendedor.nome }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="data_saida">Data de saida</label>
+              <input type="date" class="form-control" id="data_saida" name="data_saida"
+                     value="{{ dados.data_saida }}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="observacao">Observacao</label>
+              <textarea class="form-control" id="observacao" name="observacao"
+                        rows="3">{{ dados.observacao }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-marca w-100 fw-semibold">
+              <i class="bi bi-check2-circle me-1"></i>Montar sacola
+            </button>
+            <p class="small text-secondary mt-3 mb-0">
+              As pecas saem do estoque no ato, atreladas a esta NF. O acerto
+              (o que foi vendido e o que voltou) e registrado depois, na
+              ficha da sacola.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var camposQtd = document.querySelectorAll(".qtd-sacola");
+  function atualizarTotalSacola() {
+    var total = 0;
+    camposQtd.forEach(function (campo) {
+      total += parseInt(campo.value, 10) || 0;
+    });
+    var alvo = document.getElementById("total-pecas");
+    if (alvo) {
+      alvo.textContent = total;
+    }
+  }
+  camposQtd.forEach(function (campo) {
+    campo.addEventListener("input", atualizarTotalSacola);
+  });
+  atualizarTotalSacola();
+</script>
+{% endblock %}

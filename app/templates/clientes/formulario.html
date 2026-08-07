@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Novo cliente' if novo else 'Editar cliente' }}{% endblock %}
+{% block cabecalho %}{{ 'Novo cliente' if novo else 'Editar cliente' }}{% endblock %}
+{% block subcabecalho %}Dados usados nas vendas e no controle do crediario{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('clientes.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<form method="post" class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-person me-2 text-marca"></i>Dados do cliente</div>
+      <div class="card-body row g-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="nome">Nome completo *</label>
+          <input type="text" class="form-control" id="nome" name="nome" required
+                 value="{{ cliente.nome }}">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="telefone">Telefone</label>
+          <input type="text" class="form-control" id="telefone" name="telefone"
+                 value="{{ cliente.telefone }}" placeholder="(11) 99999-0000">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="data_nascimento">Data de nascimento *</label>
+          <input type="date" class="form-control" id="data_nascimento" name="data_nascimento"
+                 required value="{{ cliente.data_nascimento }}">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="cep">CEP *</label>
+          <input type="text" class="form-control" id="cep" name="cep" required
+                 value="{{ cliente.cep }}" placeholder="00000-000" maxlength="9">
+        </div>
+        <div class="col-6 col-md-5">
+          <label class="form-label" for="endereco">Endereco</label>
+          <input type="text" class="form-control" id="endereco" name="endereco"
+                 value="{{ cliente.endereco }}" placeholder="Rua, numero, bairro">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="vendedor_captador_id">Vendedor que trouxe o cliente</label>
+          <select class="form-select" id="vendedor_captador_id" name="vendedor_captador_id">
+            <option value="">Nao informado</option>
+            {% for vendedor in vendedores %}
+              <option value="{{ vendedor.id }}"
+                      {{ 'selected' if cliente.vendedor_captador_id|string == vendedor.id|string }}>
+                {{ vendedor.nome }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Quem captou/cadastrou este cliente na loja.</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="observacao">Observacoes</label>
+          <textarea class="form-control" id="observacao" name="observacao" rows="3"
+                    placeholder="Preferencias, referencias, historico de pagamento...">{{ cliente.observacao }}</textarea>
+        </div>
+        <div class="col-12">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                   {{ 'checked' if cliente.ativo }}>
+            <label class="form-check-label" for="ativo">Cliente ativo</label>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer text-end">
+        <button type="submit" class="btn btn-marca fw-semibold">
+          <i class="bi bi-check2 me-1"></i>{{ 'Cadastrar cliente' if novo else 'Salvar alteracoes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

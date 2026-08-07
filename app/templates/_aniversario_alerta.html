@@ -1,0 +1,13 @@
+{% if aniversariantes_hoje %}
+  <div class="alert alert-warning d-flex align-items-start gap-2 shadow-sm mb-3" role="alert">
+    <i class="bi bi-gift-fill fs-4"></i>
+    <div>
+      <strong>Hoje e aniversario de</strong>
+      {% for pessoa in aniversariantes_hoje %}
+        <a href="{{ url_for('clientes.detalhe', cliente_id=pessoa.id) }}"
+           class="alert-link">{{ pessoa.nome }}</a>{{ ', ' if not loop.last else '' }}
+      {% endfor %}
+      &middot; aproveite para ligar e oferecer um mimo ou desconto especial.
+    </div>
+  </div>
+{% endif %}

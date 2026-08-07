@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block titulo %}Sacola #{{ sacola.id }}{% endblock %}
+{% block cabecalho %}
+  Sacola #{{ sacola.id }}
+  {% if sacola.status == 'ACERTADA' %}
+    <span class="badge bg-success align-middle ms-2">Acertada</span>
+  {% else %}
+    <span class="badge bg-warning text-dark align-middle ms-2">Em aberto</span>
+  {% endif %}
+{% endblock %}
+{% block subcabecalho %}
+  Vendedor {{ sacola.vendedor }} &middot; saida em {{ sacola.data_saida | data_br }}
+  {%- if sacola.nf_numero %}
+    &middot; NF
+    <a href="{{ url_for('estoque.nota_fiscal_detalhe', nota_id=sacola.nota_fiscal_id) }}">
+      {{ sacola.nf_numero }}
+    </a>
+  {% endif %}
+  {%- if sacola.data_acerto %} &middot; acertada em {{ sacola.data_acerto | data_br }}{% endif %}
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('sacolas.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Saiu</div>
+      <div class="kpi-valor">{{ totais.saida }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-ok h-100"><div class="card-body">
+      <div class="kpi-rotulo">Vendeu</div>
+      <div class="kpi-valor">{{ totais.vendida }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-info h-100"><div class="card-body">
+      <div class="kpi-rotulo">Devolveu</div>
+      <div class="kpi-valor">{{ totais.devolvida }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi {{ 'kpi-alerta' if totais.em_posse > 0 else 'kpi-ok' }} h-100">
+      <div class="card-body">
+        <div class="kpi-rotulo">Em posse do vendedor</div>
+        <div class="kpi-valor">{{ totais.em_posse }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if sacola.observacao %}
+  <div class="alert alert-light border">
+    <i class="bi bi-sticky me-2"></i>{{ sacola.observacao }}
+  </div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-bag-heart me-2 text-marca"></i>Itens da sacola</div>
+  <form method="post" action="{{ url_for('sacolas.acerto', sacola_id=sacola.id) }}">
+    <div class="table-responsive">
+      <table class="table tabela-compacta align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Codigo</th><th>Produto</th><th>Tamanho</th>
+            <th class="text-center">Saiu</th>
+            <th class="text-center">Vendido (total)</th>
+            <th class="text-center">Devolvido (total)</th>
+            <th class="text-center">Em posse</th>
+            {% if pode('sacolas.gerenciar') and sacola.status != 'ACERTADA' %}
+              <th class="text-center" style="width: 12%">Vendeu agora</th>
+              <th class="text-center" style="width: 12%">Devolveu agora</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in itens %}
+            <tr>
+              <td>
+                <a href="{{ url_for('produtos.detalhe', produto_id=item.produto_id) }}"
+                   class="codigo text-decoration-none">{{ item.codigo_fabricante }}</a>
+              </td>
+              <td>{{ item.descricao }}</td>
+              <td>{{ item.tamanho or '-' }}</td>
+              <td class="text-center">{{ item.quantidade_saida }}</td>
+              <td class="text-center text-success">{{ item.quantidade_vendida }}</td>
+              <td class="text-center text-info">{{ item.quantidade_devolvida }}</td>
+              <td class="text-center {{ 'fw-semibold text-warning-emphasis' if item.em_posse > 0 }}">
+                {{ item.em_posse }}
+              </td>
+              {% if pode('sacolas.gerenciar') and sacola.status != 'ACERTADA' %}
+                <td class="text-center">
+                  {% if item.em_posse > 0 %}
+                    <input type="number" min="0" max="{{ item.em_posse }}" step="1"
+                           class="form-control form-control-sm text-center"
+                           name="vendeu_{{ item.id }}" value="0">
+                  {% else %}
+                    <span class="text-secondary">-</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if item.em_posse > 0 %}
+                    <input type="number" min="0" max="{{ item.em_posse }}" step="1"
+                           class="form-control form-control-sm text-center"
+                           name="devolveu_{{ item.id }}" value="0">
+                  {% else %}
+                    <span class="text-secondary">-</span>
+                  {% endif %}
+                </td>
+              {% endif %}
+            </tr>
+          {% else %}
+            <tr><td colspan="9" class="text-center text-secondary py-4">Sacola sem itens.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pode('sacolas.gerenciar') and sacola.status != 'ACERTADA' %}
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <span class="small text-secondary">
+          Informe quantas pecas foram vendidas e quantas voltaram ao estoque desde o
+          ultimo acerto. As devolvidas retornam ao estoque automaticamente.
+        </span>
+        <button type="submit" class="btn btn-marca fw-semibold">
+          <i class="bi bi-check2-circle me-1"></i>Registrar acerto
+        </button>
+      </div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

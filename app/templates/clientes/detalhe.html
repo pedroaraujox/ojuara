@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block titulo %}{{ cliente.nome }}{% endblock %}
+{% block cabecalho %}{{ cliente.nome }}{% endblock %}
+{% block subcabecalho %}
+  {{ cliente.telefone or 'sem telefone' }} &middot; nascimento {{ cliente.data_nascimento | data_br }}
+  &middot; {{ cliente.endereco or 'sem endereco' }}
+  {%- if cliente.cep %} &middot; CEP {{ cliente.cep }}{% endif %}
+  {%- if cliente.captador_nome %} &middot; captado por {{ cliente.captador_nome }}{% endif %}
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('vendas.nova') }}?cliente_id={{ cliente.id }}" class="btn btn-marca btn-sm">
+    <i class="bi bi-bag-plus me-1"></i>Nova venda
+  </a>
+  <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-pencil me-1"></i>Editar
+  </a>
+  <a href="{{ url_for('clientes.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Compras</div>
+      <div class="kpi-valor">{{ resumo.compras }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-ok h-100"><div class="card-body">
+      <div class="kpi-rotulo">Total comprado</div>
+      <div class="kpi-valor">{{ resumo.total_comprado | brl }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-info h-100"><div class="card-body">
+      <div class="kpi-rotulo">Crediario em aberto</div>
+      <div class="kpi-valor">{{ resumo.em_aberto | brl }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi {{ 'kpi-alerta' if resumo.vencido > 0 else 'kpi-ok' }} h-100">
+      <div class="card-body">
+        <div class="kpi-rotulo">Em atraso</div>
+        <div class="kpi-valor">{{ resumo.vencido | brl }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if cliente.observacao %}
+  <div class="alert alert-light border">
+    <i class="bi bi-sticky me-2"></i>{{ cliente.observacao }}
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-12 col-xl-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-calendar2-week me-2 text-marca"></i>Carne do crediario</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Venda</th><th>Parcela</th><th>Vencimento</th>
+              <th class="text-end">Valor</th><th>Situacao</th><th class="text-end">Acao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for parcela in parcelas %}
+              <tr>
+                <td><a href="{{ url_for('vendas.detalhe', venda_id=parcela.venda_id) }}">#{{ parcela.venda_id }}</a></td>
+                <td>{{ parcela.numero }}/{{ parcela.total_parcelas }}</td>
+                <td>{{ parcela.vencimento | data_br }}</td>
+                <td class="text-end fw-semibold">{{ parcela.valor | brl }}</td>
+                <td>
+                  {% if parcela.pago %}
+                    <span class="badge bg-success">Pago em {{ parcela.data_pagamento | data_br }}</span>
+                  {% elif parcela.vencimento < hoje %}
+                    <span class="badge badge-vencida">Vencida</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Em aberto</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if parcela.pago %}
+                    {% if pode('crediario.estornar') %}
+                      <form method="post" action="{{ url_for('crediario.estornar', parcela_id=parcela.id) }}"
+                            class="d-inline" data-confirmar="Estornar o pagamento desta parcela?">
+                        <button class="btn btn-sm btn-outline-secondary">Estornar</button>
+                      </form>
+                    {% endif %}
+                  {% elif pode('crediario.receber') %}
+                    <form method="post" action="{{ url_for('crediario.pagar', parcela_id=parcela.id) }}"
+                          class="d-inline">
+                      <button class="btn btn-sm btn-success">Receber</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-secondary py-4">
+                Cliente sem parcelas de crediario.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-bag-check me-2 text-marca"></i>Historico de compras</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr><th>#</th><th>Data</th><th>Vendedor</th><th>Pagto</th><th class="text-end">Total</th></tr>
+          </thead>
+          <tbody>
+            {% for venda in vendas %}
+              <tr class="{{ 'text-decoration-line-through text-secondary' if venda.cancelada }}">
+                <td><a href="{{ url_for('vendas.detalhe', venda_id=venda.id) }}">{{ venda.id }}</a></td>
+                <td>{{ venda.data | data_br }}</td>
+                <td class="small">{{ venda.vendedor }}</td>
+                <td class="small">
+                  {{ FORMAS_PAGAMENTO[venda.forma_pagamento] }}
+                  {%- if venda.forma_pagamento == 'CREDIARIO' %} ({{ venda.parcelas }}x){% endif %}
+                </td>
+                <td class="text-end fw-semibold">{{ venda.total | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="text-center text-secondary py-4">Nenhuma compra registrada.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Novo produto' if novo else 'Editar produto' }}{% endblock %}
+{% block cabecalho %}{{ 'Novo produto' if novo else 'Editar produto' }}{% endblock %}
+{% block subcabecalho %}
+  O codigo do produto identifica o modelo; o par codigo + tamanho identifica
+  a peca exata usada nas entradas, baixas, devolucoes e vendas em lote.
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('produtos.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<form method="post" class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-box-seam me-2 text-marca"></i>Dados do produto</div>
+      <div class="card-body row g-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="codigo_fabricante">Codigo do produto *</label>
+          <div class="input-group">
+            <input type="text" class="form-control codigo text-uppercase" id="codigo_fabricante"
+                   name="codigo_fabricante" required minlength="5" maxlength="5"
+                   inputmode="numeric" pattern="[0-9]{5}" autocomplete="off"
+                   value="{{ produto.codigo_fabricante }}" placeholder="Ex.: 12015">
+            <button type="button" class="btn btn-outline-secondary leitor-campo"
+                    data-leitor-campo="codigo_fabricante" data-leitor-nome-campo="nome"
+                    title="Ler codigo e nome pela camera">
+              <i class="bi bi-camera"></i>
+            </button>
+          </div>
+          <div class="form-text">Sempre 5 numeros. Tamanho e cor sao manuais.</div>
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="form-label" for="nome">Nome do produto *</label>
+          <input type="text" class="form-control" id="nome" name="nome" required
+                 value="{{ produto.nome }}" placeholder="Sutia Renda Delicata">
+          <div class="form-text">A camera sugere o texto da etiqueta; revise antes de salvar.</div>
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="tamanho">Tamanho *</label>
+          <input type="text" class="form-control text-uppercase" id="tamanho" name="tamanho" required
+                 value="{{ produto.tamanho }}" placeholder="P / M / G / GG / U">
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="cor">Cor *</label>
+          <input type="text" class="form-control" id="cor" name="cor" required value="{{ produto.cor }}">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="preco_custo">Preco de custo</label>
+          <div class="input-group">
+            <span class="input-group-text">R$</span>
+            <input type="number" step="0.01" min="0" class="form-control" id="preco_custo"
+                   name="preco_custo" value="{{ '%.2f' % produto.preco_custo }}">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-tags me-2 text-marca"></i>Preco de venda</div>
+      <div class="card-body row g-3">
+        <div class="col-12">
+          <label class="form-label" for="preco_venda">Preco de venda *</label>
+          <div class="input-group">
+            <span class="input-group-text">R$</span>
+            <input type="number" step="0.01" min="0" class="form-control" id="preco_venda"
+                   name="preco_venda" required value="{{ '%.2f' % produto.preco_venda }}">
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                   {{ 'checked' if produto.ativo }}>
+            <label class="form-check-label" for="ativo">Produto ativo</label>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="alert alert-info small mb-0">
+            O catalogo e so cadastro: este produto entra no sistema com estoque
+            zerado. Para receber mercadoria, use <strong>Notas Fiscais &gt;
+            Entrada de NF</strong> informando a Nota Fiscal de compra.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-marca w-100 fw-semibold">
+      <i class="bi bi-check2 me-1"></i>{{ 'Cadastrar produto' if novo else 'Salvar alteracoes' }}
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
+{% endblock %}

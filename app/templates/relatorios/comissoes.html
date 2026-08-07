@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Minha comissao' if somente_meu else 'Comissoes' }}{% endblock %}
+{% block cabecalho %}
+  {{ 'Minha comissao' if somente_meu else 'Comissoes por vendedor' }}
+{% endblock %}
+{% block subcabecalho %}
+  {{ rotulo }} &middot; periodo de {{ inicio | data_br }} a {{ fim | data_br }}
+{% endblock %}
+
+{% block acoes %}
+  <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
+    <i class="bi bi-printer me-1"></i>Imprimir
+  </button>
+{% endblock %}
+
+{% block conteudo %}
+<div class="card mb-3 d-print-none">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label small" for="mes">Mes de referencia</label>
+        <select class="form-select" id="mes" name="mes" onchange="this.form.submit()">
+          {% for valor, rotulo_mes in competencias %}
+            <option value="{{ valor }}" {{ 'selected' if competencia == valor }}>{{ rotulo_mes }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-marca w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-md-4">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Vendas no mes</div>
+      <div class="kpi-valor">{{ totais.vendas }}</div>
+    </div></div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card kpi kpi-ok h-100"><div class="card-body">
+      <div class="kpi-rotulo">{{ 'Quanto eu vendi' if somente_meu else 'Total vendido' }}</div>
+      <div class="kpi-valor">{{ totais.vendido | brl }}</div>
+    </div></div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card kpi kpi-info h-100"><div class="card-body">
+      <div class="kpi-rotulo">{{ 'Minha comissao' if somente_meu else 'Comissoes a pagar' }}</div>
+      <div class="kpi-valor">{{ totais.comissao | brl }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-cash-coin me-2 text-marca"></i>Fechamento de {{ rotulo }}</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Vendedor</th><th class="text-center">Vendas</th>
+              <th class="text-end">Total vendido</th><th style="width: 20%">Participacao</th>
+              <th class="text-center">%</th><th class="text-end">Comissao</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for linha in linhas %}
+              <tr>
+                <td>
+                  {% if pode('vendedores.ver') %}
+                    <a href="{{ url_for('vendedores.detalhe', vendedor_id=linha.id) }}"
+                       class="text-decoration-none fw-semibold">{{ linha.nome }}</a>
+                  {% else %}
+                    <span class="fw-semibold">{{ linha.nome }}</span>
+                  {% endif %}
+                  {% if linha.total_crediario %}
+                    <div class="small text-secondary">
+                      crediario: {{ linha.total_crediario | brl }}
+                    </div>
+                  {% endif %}
+                </td>
+                <td class="text-center">{{ linha.qtd_vendas }}</td>
+                <td class="text-end fw-semibold">{{ linha.total_vendido | brl }}</td>
+                <td>
+                  <div class="barra-progresso">
+                    <span style="width: {{ (linha.total_vendido / maior * 100) | round(1) }}%"></span>
+                  </div>
+                </td>
+                <td class="text-center text-secondary">{{ '%.1f' % linha.percentual_comissao }}%</td>
+                <td class="text-end text-success fw-semibold">{{ linha.comissao | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-secondary py-4">
+                Nenhum vendedor cadastrado.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th>Total</th>
+              <th class="text-center">{{ totais.vendas }}</th>
+              <th class="text-end">{{ totais.vendido | brl }}</th>
+              <th></th><th></th>
+              <th class="text-end">{{ totais.comissao | brl }}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-pie-chart me-2 text-marca"></i>Vendas por forma de pagamento</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr><th>Forma</th><th class="text-center">Qtd</th><th class="text-end">Total</th></tr>
+          </thead>
+          <tbody>
+            {% for linha in por_forma %}
+              <tr>
+                <td>{{ formas.get(linha.forma_pagamento, linha.forma_pagamento) }}</td>
+                <td class="text-center">{{ linha.qtd }}</td>
+                <td class="text-end fw-semibold">{{ linha.total | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="3" class="text-center text-secondary py-4">Sem vendas no mes.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

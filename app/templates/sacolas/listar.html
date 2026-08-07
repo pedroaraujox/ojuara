@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block titulo %}Sacolas{% endblock %}
+{% block cabecalho %}{{ 'Minhas sacolas' if restrito else 'Sacolas' }}{% endblock %}
+{% block subcabecalho %}
+  Pecas em consignacao externa, levadas por vendedores para vender porta a porta.
+{% endblock %}
+
+{% block acoes %}
+  {% if pode('sacolas.gerenciar') %}
+    <a href="{{ url_for('sacolas.nova') }}" class="btn btn-marca btn-sm">
+      <i class="bi bi-bag-plus me-1"></i>Montar sacola
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label small" for="status">Situacao</label>
+        <select class="form-select" id="status" name="status">
+          <option value="">Todas</option>
+          <option value="ABERTA" {{ 'selected' if status == 'ABERTA' }}>Em aberto</option>
+          <option value="ACERTADA" {{ 'selected' if status == 'ACERTADA' }}>Acertadas</option>
+        </select>
+      </div>
+      {% if not restrito %}
+        <div class="col-12 col-md-3">
+          <label class="form-label small" for="vendedor_id">Vendedor</label>
+          <select class="form-select" id="vendedor_id" name="vendedor_id">
+            <option value="">Todos</option>
+            {% for vendedor in vendedores %}
+              <option value="{{ vendedor.id }}" {{ 'selected' if vendedor_id == vendedor.id|string }}>
+                {{ vendedor.nome }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-12 col-xl-2 d-flex gap-2">
+        <button type="submit" class="btn btn-marca flex-grow-1"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{{ url_for('sacolas.listar') }}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover tabela-compacta mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th><th>Vendedor</th><th>NF</th><th>Saida</th><th>Situacao</th>
+          <th class="text-center">Saiu</th><th class="text-center">Vendeu</th>
+          <th class="text-center">Devolveu</th><th class="text-center">Em posse</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sacola in sacolas %}
+          {% set em_posse = sacola.pecas_saida - sacola.pecas_vendida - sacola.pecas_devolvida %}
+          <tr>
+            <td>
+              <a href="{{ url_for('sacolas.detalhe', sacola_id=sacola.id) }}"
+                 class="fw-semibold text-decoration-none">#{{ sacola.id }}</a>
+            </td>
+            <td>{{ sacola.vendedor }}</td>
+            <td class="small">
+              {% if sacola.nf_numero %}
+                <a href="{{ url_for('estoque.nota_fiscal_detalhe', nota_id=sacola.nota_fiscal_id) }}">
+                  {{ sacola.nf_numero }}
+                </a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ sacola.data_saida | data_br }}</td>
+            <td>
+              {% if sacola.status == 'ACERTADA' %}
+                <span class="badge bg-success">Acertada</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">Em aberto</span>
+              {% endif %}
+            </td>
+            <td class="text-center">{{ sacola.pecas_saida }}</td>
+            <td class="text-center text-success">{{ sacola.pecas_vendida }}</td>
+            <td class="text-center text-info">{{ sacola.pecas_devolvida }}</td>
+            <td class="text-center {{ 'fw-semibold text-warning-emphasis' if em_posse > 0 }}">
+              {{ em_posse }}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="9" class="text-center text-secondary py-5">
+            Nenhuma sacola encontrada.
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

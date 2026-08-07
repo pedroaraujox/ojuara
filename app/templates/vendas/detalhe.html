@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block titulo %}Venda #{{ venda.id }}{% endblock %}
+{% block cabecalho %}
+  Venda #{{ venda.id }}
+  {% if venda.cancelada %}<span class="badge bg-danger align-middle ms-2">cancelada</span>{% endif %}
+{% endblock %}
+{% block subcabecalho %}
+  {{ venda.data | data_br }} &middot; {{ venda.cliente }} &middot; vendedor {{ venda.vendedor }}
+{% endblock %}
+
+{% block acoes %}
+  <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
+    <i class="bi bi-printer me-1"></i>Imprimir
+  </button>
+  {% if not venda.cancelada and pode('vendas.cancelar') %}
+    <form method="post" action="{{ url_for('vendas.cancelar', venda_id=venda.id) }}"
+          class="d-inline d-print-none"
+          data-confirmar="Cancelar a venda #{{ venda.id }}? As pecas voltam ao estoque e as parcelas em aberto sao removidas.">
+      <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle me-1"></i>Cancelar venda</button>
+    </form>
+  {% endif %}
+  <a href="{{ url_for('vendas.listar') }}" class="btn btn-outline-secondary btn-sm d-print-none">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-basket me-2 text-marca"></i>Itens da venda</div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Codigo</th><th>Tamanho</th><th>Produto</th><th class="text-center">Qtd</th>
+              <th class="text-end">Preco unit.</th><th class="text-end">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in itens %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('produtos.detalhe', produto_id=item.produto_id) }}"
+                     class="codigo text-decoration-none">{{ item.codigo_fabricante }}</a>
+                </td>
+                <td>{{ item.tamanho or '-' }}</td>
+                <td>{{ item.descricao }}</td>
+                <td class="text-center">{{ item.quantidade }}</td>
+                <td class="text-end">{{ item.preco_unitario | brl }}</td>
+                <td class="text-end fw-semibold">{{ item.subtotal | brl }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="5" class="text-end">Subtotal</th>
+              <th class="text-end">{{ venda.subtotal | brl }}</th>
+            </tr>
+            <tr>
+              <th colspan="5" class="text-end">Desconto</th>
+              <th class="text-end text-danger">{{ venda.desconto | brl }}</th>
+            </tr>
+            <tr>
+              <th colspan="5" class="text-end h5 mb-0">Total</th>
+              <th class="text-end h5 mb-0 text-marca">{{ venda.total | brl }}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    {% if parcelas %}
+      <div class="card">
+        <div class="card-header">
+          <i class="bi bi-calendar2-week me-2 text-marca"></i>Crediario
+          &middot; {{ venda.parcelas }} parcela(s)
+        </div>
+        <div class="table-responsive">
+          <table class="table tabela-compacta mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Parcela</th><th>Vencimento</th><th class="text-end">Valor</th>
+                <th>Situacao</th><th class="text-end d-print-none">Acao</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for parcela in parcelas %}
+                <tr>
+                  <td>{{ parcela.numero }}/{{ parcela.total_parcelas }}</td>
+                  <td>{{ parcela.vencimento | data_br }}</td>
+                  <td class="text-end fw-semibold">{{ parcela.valor | brl }}</td>
+                  <td>
+                    {% if parcela.pago %}
+                      <span class="badge bg-success">Pago em {{ parcela.data_pagamento | data_br }}</span>
+                    {% elif parcela.vencimento < hoje %}
+                      <span class="badge badge-vencida">Vencida</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Em aberto</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end d-print-none">
+                    {% if parcela.pago %}
+                      {% if pode('crediario.estornar') %}
+                        <form method="post" action="{{ url_for('crediario.estornar', parcela_id=parcela.id) }}"
+                              class="d-inline" data-confirmar="Estornar o pagamento desta parcela?">
+                          <button class="btn btn-sm btn-outline-secondary">Estornar</button>
+                        </form>
+                      {% endif %}
+                    {% elif pode('crediario.receber') %}
+                      <form method="post" action="{{ url_for('crediario.pagar', parcela_id=parcela.id) }}"
+                            class="d-inline">
+                        <button class="btn btn-sm btn-success">Receber</button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-info-circle me-2 text-marca"></i>Resumo</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5 fw-normal text-secondary">Cliente</dt>
+          <dd class="col-7 text-end">
+            <a href="{{ url_for('clientes.detalhe', cliente_id=venda.cliente_id) }}"
+               class="text-decoration-none">{{ venda.cliente }}</a>
+          </dd>
+          <dt class="col-5 fw-normal text-secondary">Telefone</dt>
+          <dd class="col-7 text-end">{{ venda.telefone or '-' }}</dd>
+          <dt class="col-5 fw-normal text-secondary">Endereco</dt>
+          <dd class="col-7 text-end small">{{ venda.endereco or '-' }}</dd>
+          <dt class="col-5 fw-normal text-secondary">Vendedor</dt>
+          <dd class="col-7 text-end">
+            {% if pode('vendedores.ver') %}
+              <a href="{{ url_for('vendedores.detalhe', vendedor_id=venda.vendedor_id) }}"
+                 class="text-decoration-none">{{ venda.vendedor }}</a>
+            {% else %}
+              {{ venda.vendedor }}
+            {% endif %}
+          </dd>
+          <dt class="col-5 fw-normal text-secondary">Pagamento</dt>
+          <dd class="col-7 text-end">
+            {{ FORMAS_PAGAMENTO[venda.forma_pagamento] }}
+            {%- if venda.forma_pagamento == 'CREDIARIO' %} ({{ venda.parcelas }}x){% endif %}
+          </dd>
+          <dt class="col-5 fw-normal text-secondary">Comissao</dt>
+          <dd class="col-7 text-end text-success">
+            {{ venda.comissao_valor | brl }}
+            <span class="text-secondary small">({{ '%.1f' % venda.comissao_pct }}%)</span>
+          </dd>
+          <dt class="col-5 fw-normal text-secondary">Registrada em</dt>
+          <dd class="col-7 text-end small">{{ venda.criado_em | data_hora_br }}</dd>
+        </dl>
+        {% if venda.observacao %}
+          <hr>
+          <p class="mb-0 small"><strong>Observacao:</strong> {{ venda.observacao }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if venda.cancelada %}
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-octagon me-2"></i>
+        Venda cancelada. As pecas retornaram ao estoque e as parcelas em aberto foram removidas.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

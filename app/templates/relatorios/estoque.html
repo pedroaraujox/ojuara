@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block titulo %}Posicao de estoque{% endblock %}
+{% block cabecalho %}Posicao de estoque{% endblock %}
+{% block subcabecalho %}
+  {{ totais.itens }} item(ns) &middot; {{ totais.pecas }} pecas &middot;
+  custo {{ totais.custo | brl }} &middot; venda potencial {{ totais.venda | brl }}
+{% endblock %}
+
+{% block acoes %}
+  <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
+    <i class="bi bi-printer me-1"></i>Imprimir
+  </button>
+{% endblock %}
+
+{% block conteudo %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card kpi h-100"><div class="card-body">
+      <div class="kpi-rotulo">Pecas em estoque</div>
+      <div class="kpi-valor">{{ totais.pecas }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-info h-100"><div class="card-body">
+      <div class="kpi-rotulo">Capital investido (custo)</div>
+      <div class="kpi-valor">{{ totais.custo | brl }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-ok h-100"><div class="card-body">
+      <div class="kpi-rotulo">Venda potencial</div>
+      <div class="kpi-valor">{{ totais.venda | brl }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card kpi kpi-ok h-100"><div class="card-body">
+      <div class="kpi-rotulo">Margem potencial</div>
+      <div class="kpi-valor">{{ totais.margem | brl }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clipboard-data me-2 text-marca"></i>Produtos</span>
+        <form method="get" class="d-print-none">
+          <select class="form-select form-select-sm" name="ordem" onchange="this.form.submit()">
+            <option value="valor"   {{ 'selected' if ordem == 'valor' }}>Ordenar por valor em estoque</option>
+            <option value="estoque" {{ 'selected' if ordem == 'estoque' }}>Ordenar por quantidade</option>
+            <option value="nome"    {{ 'selected' if ordem == 'nome' }}>Ordenar por nome</option>
+            <option value="codigo"  {{ 'selected' if ordem == 'codigo' }}>Ordenar por codigo</option>
+          </select>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Codigo</th><th>Produto</th><th class="text-center">Estoque</th>
+              <th class="text-end">Custo unit.</th><th class="text-end">Total custo</th>
+              <th class="text-end">Total venda</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for produto in produtos %}
+              <tr>
+                <td><span class="codigo">{{ produto.codigo_fabricante }}</span></td>
+                <td>
+                  <a href="{{ url_for('produtos.detalhe', produto_id=produto.id) }}"
+                     class="text-decoration-none">{{ produto.nome }}</a>
+                  <span class="text-secondary small">{{ produto.tamanho }} {{ produto.cor }}</span>
+                </td>
+                <td class="text-center">
+                  {% if produto.estoque <= produto.estoque_minimo %}
+                    <span class="badge {{ 'bg-danger' if produto.estoque == 0 else 'bg-warning text-dark' }}">
+                      {{ produto.estoque }}
+                    </span>
+                  {% else %}
+                    {{ produto.estoque }}
+                  {% endif %}
+                </td>
+                <td class="text-end">{{ produto.preco_custo | brl }}</td>
+                <td class="text-end fw-semibold">{{ (produto.estoque * produto.preco_custo) | brl }}</td>
+                <td class="text-end text-success">{{ (produto.estoque * produto.preco_venda) | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-secondary py-4">Nenhum produto ativo.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="2">Total</th>
+              <th class="text-center">{{ totais.pecas }}</th>
+              <th></th>
+              <th class="text-end">{{ totais.custo | brl }}</th>
+              <th class="text-end">{{ totais.venda | brl }}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-truck me-2 text-marca"></i>Compras por fornecedor
+        <span class="small text-secondary">(entradas por NF)</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr><th>Fornecedor</th><th class="text-center">Pecas recebidas</th><th class="text-end">Custo</th></tr>
+          </thead>
+          <tbody>
+            {% for linha in por_fornecedor %}
+              <tr>
+                <td class="small">{{ linha.fornecedor }}</td>
+                <td class="text-center">{{ linha.pecas }}</td>
+                <td class="text-end fw-semibold">{{ linha.custo | brl }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="3" class="text-center text-secondary py-4">
+                Nenhuma entrada de estoque lancada ainda.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-arrow-return-left me-2 text-info"></i>Mais devolvidos ao fornecedor
+      </div>
+      <div class="table-responsive">
+        <table class="table tabela-compacta mb-0">
+          <thead class="table-light">
+            <tr><th>Codigo</th><th class="text-center">Pecas</th><th class="text-center">Lancamentos</th></tr>
+          </thead>
+          <tbody>
+            {% for linha in devolucoes %}
+              <tr>
+                <td><span class="codigo">{{ linha.codigo_fabricante }}</span></td>
+                <td class="text-center fw-semibold">{{ linha.pecas }}</td>
+                <td class="text-center text-secondary">{{ linha.ocorrencias }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="3" class="text-center text-secondary py-4">
+                Nenhuma devolucao registrada.
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

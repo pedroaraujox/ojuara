@@ -1,0 +1,438 @@
+/* Ojuara Lingerie - identidade visual - Outbox Tech
+ * Tokens de design (tema claro/escuro) + refinamentos sobre o Bootstrap 5.3.
+ * O tema e controlado pelo atributo [data-bs-theme] na tag <html>
+ * (ver app.js / _head_tema.html) e o Bootstrap ja adapta a maior parte dos
+ * componentes sozinho; aqui so entram a marca, tipografia e os ajustes que
+ * o Bootstrap nao cobre nativamente.
+ */
+
+:root,
+[data-bs-theme="light"] {
+  --marca: #8e3b62;
+  --marca-rgb: 142, 59, 98;
+  --marca-hover: #6d2c4b;
+  --marca-clara: #f8eef4;
+  --marca-clara-texto: #6d2c4b;
+  --borda: #e7e1e6;
+  --sombra-cartao: 0 1px 2px rgba(40, 20, 35, .05), 0 1px 1px rgba(40, 20, 35, .03);
+  --sombra-flutuante: 0 16px 40px -16px rgba(60, 20, 45, .22);
+
+  --bs-body-bg: #f7f5f8;
+  --bs-body-color: #2a2430;
+  --bs-secondary-color: #6d6475;
+  --bs-border-color: var(--borda);
+  --bs-border-color-translucent: var(--borda);
+  --bs-tertiary-bg: #f1edf2;
+  --bs-emphasis-color: #1c171f;
+
+  --bs-primary: var(--marca);
+  --bs-primary-rgb: 142, 59, 98;
+  --bs-link-color: var(--marca);
+  --bs-link-color-rgb: 142, 59, 98;
+  --bs-link-hover-color: var(--marca-hover);
+  --bs-link-hover-color-rgb: 109, 44, 75;
+
+  --bs-border-radius: .65rem;
+  --bs-border-radius-sm: .5rem;
+  --bs-border-radius-lg: .9rem;
+  --bs-border-radius-xl: 1.1rem;
+  --bs-border-radius-2xl: 1.4rem;
+
+  --bs-focus-ring-color: rgba(142, 59, 98, .2);
+  --bs-body-font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+[data-bs-theme="dark"] {
+  --marca: #cf6690;
+  --marca-rgb: 207, 102, 144;
+  --marca-hover: #dc85a8;
+  --marca-clara: rgba(207, 102, 144, .16);
+  --marca-clara-texto: #f0b7cd;
+  --borda: #362f3d;
+  --sombra-cartao: 0 1px 2px rgba(0, 0, 0, .35);
+  --sombra-flutuante: 0 20px 45px -18px rgba(0, 0, 0, .6);
+
+  --bs-body-bg: #15121a;
+  --bs-body-color: #ece7ee;
+  --bs-secondary-color: #a89bb0;
+  --bs-border-color: var(--borda);
+  --bs-border-color-translucent: var(--borda);
+  --bs-tertiary-bg: #221d29;
+  --bs-secondary-bg: #221d29;
+  --bs-emphasis-color: #fbf9fc;
+
+  --bs-primary: var(--marca);
+  --bs-primary-rgb: 207, 102, 144;
+  --bs-link-color: var(--marca);
+  --bs-link-color-rgb: 207, 102, 144;
+  --bs-link-hover-color: var(--marca-hover);
+
+  --bs-focus-ring-color: rgba(207, 102, 144, .3);
+
+  color-scheme: dark;
+}
+
+/* --- base ------------------------------------------------------------- */
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body > main { max-width: 1600px; margin: 0 auto; }
+
+h1, h2, h3, h4, h5, h6 { letter-spacing: -.015em; }
+
+::selection { background-color: rgba(var(--marca-rgb), .28); }
+
+a { text-decoration-thickness: 1px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  body, .card, .navbar, .dropdown-menu, .btn, .form-control, .form-select,
+  .list-group-item, .alert, .badge, .nav-link, .btn-tema {
+    transition: background-color .16s ease, border-color .16s ease,
+      color .16s ease, box-shadow .16s ease, transform .1s ease;
+  }
+}
+
+/* Barra de rolagem discreta, so onde o navegador suporta (webkit). */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--marca-rgb), .28);
+  border-radius: 999px;
+  border: 2px solid var(--bs-body-bg);
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(var(--marca-rgb), .45); }
+
+/* --- navbar ------------------------------------------------------------ */
+
+.navbar.bg-marca {
+  background-color: var(--marca) !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .08);
+}
+.navbar-brand { letter-spacing: -.02em; }
+
+.navbar-dark .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, .82);
+  border-radius: var(--bs-border-radius-sm);
+  padding-top: .45rem;
+  padding-bottom: .45rem;
+}
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus-visible {
+  color: #fff;
+  background-color: rgba(255, 255, 255, .12);
+}
+.navbar-dark .navbar-nav .nav-link.active {
+  color: #fff;
+  background-color: rgba(255, 255, 255, .18);
+  font-weight: 600;
+}
+.navbar .dropdown-menu { margin-top: .35rem; }
+
+.btn-tema {
+  width: 2.3rem;
+  height: 2.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, .14);
+  color: #fff;
+  border: none;
+  flex: none;
+}
+.btn-tema:hover { background-color: rgba(255, 255, 255, .26); color: #fff; }
+.btn-tema:active { transform: scale(.9); }
+.btn-tema .bi-sun-fill { display: none; }
+[data-bs-theme="dark"] .btn-tema .bi-moon-stars-fill { display: none; }
+[data-bs-theme="dark"] .btn-tema .bi-sun-fill { display: inline-block; }
+
+/* --- cartoes ------------------------------------------------------------ */
+
+/* O Bootstrap define --bs-card-bg localmente dentro de .card (herdado de
+   --bs-body-bg por padrao), entao um cartao nao ganha uma superficie
+   distinta do fundo da pagina so por sobrescrever a variavel no :root - e
+   preciso redeclarar aqui, com a mesma especificidade, para criar a
+   sensacao de "camada elevada" (mais perceptivel no tema escuro). */
+.card {
+  --bs-card-bg: #ffffff;
+  --bs-card-cap-bg: #ffffff;
+  border: 1px solid var(--bs-border-color);
+  box-shadow: var(--sombra-cartao);
+}
+[data-bs-theme="dark"] .card {
+  --bs-card-bg: #1c1822;
+  --bs-card-cap-bg: #1c1822;
+}
+.card-header {
+  font-weight: 600;
+  letter-spacing: -.005em;
+}
+
+/* Mesmo caso do .card: o Bootstrap define --bs-dropdown-bg localmente
+   dentro de .dropdown-menu (herdado do body), entao o menu suspenso
+   precisa da redeclaracao aqui para ganhar uma superficie propria. */
+.dropdown-menu {
+  --bs-dropdown-bg: #ffffff;
+  --bs-dropdown-link-hover-bg: rgba(var(--marca-rgb), .09);
+  box-shadow: var(--sombra-flutuante);
+}
+[data-bs-theme="dark"] .dropdown-menu {
+  --bs-dropdown-bg: #211c28;
+  --bs-dropdown-border-color: var(--borda);
+}
+
+/* Idem para itens de lista dentro de cartoes (list-group-flush): sem isso
+   eles ficam com a cor do fundo da pagina, nao do cartao que os envolve. */
+.list-group-item { --bs-list-group-bg: #ffffff; }
+[data-bs-theme="dark"] .list-group-item { --bs-list-group-bg: #1c1822; }
+
+/* Cartoes de indicador do painel: em vez da tarja lateral solida (cliche de
+   template pronto), um degrade sutil na cor do status + numero destacado. */
+.kpi { position: relative; overflow: hidden; }
+.kpi::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(var(--marca-rgb), .08), transparent 60%);
+  pointer-events: none;
+}
+.kpi .card-body { position: relative; }
+.kpi .kpi-rotulo {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--bs-secondary-color);
+}
+.kpi .kpi-valor {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  color: var(--marca);
+}
+.kpi.kpi-alerta::before { background: linear-gradient(160deg, rgba(217, 83, 79, .12), transparent 60%); }
+.kpi.kpi-alerta .kpi-valor { color: #d9534f; }
+.kpi.kpi-ok::before { background: linear-gradient(160deg, rgba(47, 133, 90, .12), transparent 60%); }
+.kpi.kpi-ok .kpi-valor { color: #2f855a; }
+.kpi.kpi-info::before { background: linear-gradient(160deg, rgba(43, 108, 176, .12), transparent 60%); }
+.kpi.kpi-info .kpi-valor { color: #2b6cb0; }
+
+[data-bs-theme="dark"] .kpi.kpi-alerta .kpi-valor { color: #f19490; }
+[data-bs-theme="dark"] .kpi.kpi-ok .kpi-valor { color: #66c393; }
+[data-bs-theme="dark"] .kpi.kpi-info .kpi-valor { color: #7db1e8; }
+
+/* --- tabelas ------------------------------------------------------------ */
+
+.tabela-compacta td, .tabela-compacta th {
+  padding-top: .45rem;
+  padding-bottom: .45rem;
+  vertical-align: middle;
+}
+
+thead.table-light, tfoot.table-light,
+.table > :not(caption) > tr > .table-light {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--bs-secondary-color);
+}
+/* As variantes contextuais de tabela do Bootstrap (.table-light,
+   .table-secondary, .table-danger, ...) fixam --bs-table-bg numa cor fixa
+   sempre, independente do tema (nao sao "subtle colors" adaptaveis) - por
+   isso os overrides genericos aqui, valendo em qualquer elemento que
+   carregue a classe (thead, tfoot, tr ou celulas). */
+[data-bs-theme="dark"] .table-light {
+  --bs-table-bg: #241f2b;
+  --bs-table-color: var(--bs-body-color);
+  --bs-table-border-color: var(--borda);
+}
+[data-bs-theme="dark"] .table-secondary {
+  --bs-table-bg: #2a2530;
+  --bs-table-color: var(--bs-secondary-color);
+  --bs-table-border-color: var(--borda);
+}
+[data-bs-theme="dark"] .table-danger {
+  --bs-table-bg: rgba(217, 83, 79, .18);
+  --bs-table-color: #f1b4b1;
+  --bs-table-border-color: rgba(217, 83, 79, .3);
+}
+.table-hover > tbody > tr:hover > * {
+  --bs-table-accent-bg: rgba(var(--marca-rgb), .06);
+}
+
+.codigo {
+  font-family: "Consolas", "SFMono-Regular", ui-monospace, monospace;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+/* --- formularios e botoes ------------------------------------------------ */
+
+.btn { font-weight: 600; letter-spacing: -.005em; }
+
+.btn-marca {
+  background-color: var(--marca);
+  border-color: var(--marca);
+  color: #fff;
+}
+.btn-marca:hover, .btn-marca:focus {
+  background-color: var(--marca-hover);
+  border-color: var(--marca-hover);
+  color: #fff;
+}
+
+.text-marca { color: var(--marca) !important; }
+.bg-marca-clara { background-color: var(--marca-clara) !important; color: var(--marca-clara-texto); }
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--marca);
+  box-shadow: 0 0 0 .2rem rgba(var(--marca-rgb), .16);
+}
+.form-check-input:checked {
+  background-color: var(--marca);
+  border-color: var(--marca);
+}
+.form-check-input:focus {
+  border-color: var(--marca);
+  box-shadow: 0 0 0 .2rem rgba(var(--marca-rgb), .16);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: rgba(var(--marca-rgb), .09);
+  color: var(--bs-emphasis-color);
+}
+.dropdown-item.active, .dropdown-item:active {
+  background-color: var(--marca);
+  color: #fff;
+}
+
+.list-group-item-action:hover, .list-group-item-action:focus {
+  background-color: rgba(var(--marca-rgb), .06);
+  color: inherit;
+  z-index: 1;
+}
+
+/* Linhas da grade de lote */
+.linha-lote .status-item { font-size: .8rem; min-height: 1.2rem; }
+.linha-lote input.codigo-lote { text-transform: uppercase; }
+.busca-catalogo-nf { width: min(100%, 360px); }
+.produto-selecao-nf {
+  min-height: 112px;
+  padding: .85rem;
+  color: var(--bs-body-color);
+  background: var(--bs-body-bg);
+  border: 1px solid var(--borda);
+  border-radius: .75rem;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.produto-selecao-nf:hover, .produto-selecao-nf:focus-visible {
+  border-color: var(--marca);
+  box-shadow: 0 0 0 .2rem rgba(var(--marca-rgb), .12);
+  transform: translateY(-1px);
+  outline: 0;
+}
+.painel-itens-nf { position: sticky; top: 88px; }
+.modal video { object-fit: cover; }
+.mira-leitor {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 34%;
+  height: 32%;
+  border: 3px solid rgba(255, 255, 255, .9);
+  border-radius: .5rem;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, .28);
+  pointer-events: none;
+}
+
+.barra-progresso {
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--bs-tertiary-bg);
+  overflow: hidden;
+}
+.barra-progresso > span {
+  display: block;
+  height: 100%;
+  background-color: var(--marca);
+}
+
+.badge-vencida { background-color: #c53030; }
+
+/* --- tela de login -------------------------------------------------------- */
+
+.pagina-login { min-height: 100vh; }
+
+.login-painel-marca {
+  background-color: var(--marca);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.login-painel-marca::before {
+  content: "";
+  position: absolute;
+  inset: -15%;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, .12) 0, transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(255, 255, 255, .10) 0, transparent 38%);
+  pointer-events: none;
+}
+.login-painel-marca .login-conteudo { position: relative; z-index: 1; }
+.login-recurso {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+}
+.login-recurso .bi { font-size: 1.05rem; margin-top: .15rem; opacity: .95; }
+
+/* Menu do usuario logado */
+.avatar-usuario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, .2);
+  font-size: .8rem;
+  font-weight: 700;
+  color: #fff;
+  flex: none;
+}
+
+/* Cartao de regras por perfil */
+.regra-perfil dt { font-weight: 600; }
+.regra-perfil dd { color: var(--bs-secondary-color); }
+
+/* --- responsivo ----------------------------------------------------------- */
+
+@media (max-width: 575.98px) {
+  main.container-fluid { padding-left: .85rem !important; padding-right: .85rem !important; }
+  .kpi .kpi-valor { font-size: 1.35rem; }
+  h1.h4 { font-size: 1.15rem; }
+  .card-body { padding: .9rem; }
+  .modal-dialog { margin: .5rem; }
+  .leitor-campo, .confirmar-leitura { min-height: 44px; }
+  .produto-selecao-nf { min-height: 96px; }
+  .painel-itens-nf { position: static; }
+}
+
+@media print {
+  .navbar, footer, .d-print-none { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+  .kpi::before { display: none; }
+}

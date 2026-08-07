@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block cabecalho %}Usuarios do sistema{% endblock %}
+{% block subcabecalho %}
+  {{ usuarios | length }} usuario(s) &middot; area exclusiva do super administrador
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('usuarios.novo') }}" class="btn btn-marca btn-sm">
+    <i class="bi bi-person-plus me-1"></i>Novo usuario
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="card mb-3">
+  <div class="table-responsive">
+    <table class="table table-hover tabela-compacta mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Nome</th><th>Usuario</th><th>Perfil</th><th>Vendedor vinculado</th>
+          <th>Ultimo acesso</th><th class="text-end">Acoes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in usuarios %}
+          <tr class="{{ 'table-secondary' if not item.ativo }}">
+            <td>
+              <span class="fw-semibold">{{ item.nome }}</span>
+              {% if item.id == eu.id %}
+                <span class="badge bg-marca-clara text-marca ms-1">voce</span>
+              {% endif %}
+              {% if not item.ativo %}<span class="badge bg-secondary ms-1">inativo</span>{% endif %}
+            </td>
+            <td><span class="codigo">{{ item.usuario }}</span></td>
+            <td>
+              <span class="badge bg-{{ PAPEIS[item.papel].cor }}">{{ PAPEIS[item.papel].rotulo }}</span>
+            </td>
+            <td class="small text-secondary">{{ item.vendedor_nome or '-' }}</td>
+            <td class="small text-secondary">{{ item.ultimo_acesso | data_hora_br }}</td>
+            <td class="text-end text-nowrap">
+              <a href="{{ url_for('usuarios.editar', usuario_id=item.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+              {% if item.id != eu.id %}
+                <form method="post" action="{{ url_for('usuarios.alternar', usuario_id=item.id) }}"
+                      class="d-inline"
+                      data-confirmar="Confirma {{ 'reativar' if not item.ativo else 'desativar' }} o usuario {{ item.usuario }}?">
+                  <button class="btn btn-sm btn-outline-{{ 'success' if not item.ativo else 'warning' }}"
+                          title="{{ 'Reativar' if not item.ativo else 'Desativar' }}">
+                    <i class="bi bi-{{ 'arrow-counterclockwise' if not item.ativo else 'slash-circle' }}"></i>
+                  </button>
+                </form>
+                <form method="post" action="{{ url_for('usuarios.excluir', usuario_id=item.id) }}"
+                      class="d-inline"
+                      data-confirmar="Excluir definitivamente o usuario {{ item.usuario }}? Esta acao nao pode ser desfeita.">
+                  <button class="btn btn-sm btn-outline-danger" title="Excluir">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2 class="h6 text-secondary text-uppercase mt-4 mb-2">Regras de cada perfil</h2>
+<div class="row g-3">
+  {% for chave, papel in PAPEIS.items() %}
+    <div class="col-12 col-lg-4">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center gap-2">
+          <span class="badge bg-{{ papel.cor }}">{{ papel.rotulo }}</span>
+        </div>
+        <div class="card-body">
+          <p class="small text-secondary">{{ papel.descricao }}</p>
+          <dl class="row mb-0 small regra-perfil">
+            {% for area, regra in regras[chave] %}
+              <dt class="col-4">{{ area }}</dt>
+              <dd class="col-8 mb-2">{{ regra }}</dd>
+            {% endfor %}
+          </dl>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

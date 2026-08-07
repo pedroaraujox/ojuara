@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block titulo %}Movimentacoes{% endblock %}
+{% block cabecalho %}Movimentacoes de estoque{% endblock %}
+{% block subcabecalho %}Historico completo de entradas, baixas, vendas e devolucoes{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('estoque.notas_fiscais') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-card-list me-1"></i>Listagem de Notas Fiscais
+  </a>
+  {% if pode('estoque.movimentar') %}
+    <a href="{{ url_for('estoque.entrada') }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-box-arrow-in-down me-1"></i>Entrada
+    </a>
+    <a href="{{ url_for('estoque.baixa') }}" class="btn btn-outline-warning btn-sm">
+      <i class="bi bi-box-arrow-up me-1"></i>Baixa
+    </a>
+    <a href="{{ url_for('estoque.devolucao') }}" class="btn btn-outline-info btn-sm">
+      <i class="bi bi-arrow-return-left me-1"></i>Devolucao
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block conteudo %}
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label small" for="busca">Codigo, produto ou documento</label>
+        <input type="text" class="form-control" id="busca" name="busca" value="{{ busca }}">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small" for="tipo">Tipo</label>
+        <select class="form-select" id="tipo" name="tipo">
+          <option value="">Todos</option>
+          {% for chave, rotulo in TIPOS_MOVIMENTACAO.items() %}
+            <option value="{{ chave }}" {{ 'selected' if tipo == chave }}>{{ rotulo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small" for="inicio">De</label>
+        <input type="date" class="form-control" id="inicio" name="inicio" value="{{ inicio }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small" for="fim">Ate</label>
+        <input type="date" class="form-control" id="fim" name="fim" value="{{ fim }}">
+      </div>
+      <div class="col-12 col-xl-2 d-flex gap-2">
+        <button type="submit" class="btn btn-marca flex-grow-1"><i class="bi bi-funnel"></i> Filtrar</button>
+        <a href="{{ url_for('estoque.movimentacoes') }}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if resumo %}
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    {% for chave, quantidade in resumo.items() %}
+      <span class="badge bg-marca-clara text-marca border py-2 px-3">
+        {{ TIPOS_MOVIMENTACAO.get(chave, chave) }}: <strong>{{ quantidade }}</strong> pecas
+      </span>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover tabela-compacta mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Data</th><th>Codigo</th><th>Produto</th><th>Tipo</th>
+          <th class="text-center">Qtd</th><th class="text-center">Saldo</th>
+          <th>Documento</th><th>Observacao</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mov in movimentacoes %}
+          <tr>
+            <td class="text-nowrap">{{ mov.data | data_hora_br }}</td>
+            <td><span class="codigo">{{ mov.codigo_fabricante }}</span></td>
+            <td>
+              <a href="{{ url_for('produtos.detalhe', produto_id=mov.produto_id) }}"
+                 class="text-decoration-none">{{ mov.produto_nome }}</a>
+              <span class="text-secondary small">{{ mov.tamanho }} {{ mov.cor }}</span>
+            </td>
+            <td>
+              {% if mov.tipo == 'ENTRADA' %}
+                <span class="badge bg-success">Entrada</span>
+              {% elif mov.tipo == 'VENDA' %}
+                <span class="badge bg-primary">Venda</span>
+              {% elif mov.tipo == 'BAIXA' %}
+                <span class="badge bg-warning text-dark">Baixa</span>
+              {% elif mov.tipo == 'DEVOLUCAO_FORNECEDOR' %}
+                <span class="badge bg-info text-dark">Devolucao fornecedor</span>
+              {% elif mov.tipo == 'ESTORNO' %}
+                <span class="badge bg-secondary">Estorno</span>
+              {% else %}
+                <span class="badge bg-dark">{{ mov.tipo }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center fw-semibold
+                       {{ 'text-danger' if mov.tipo in ['VENDA','BAIXA','DEVOLUCAO_FORNECEDOR']
+                          else 'text-success' }}">
+              {{ '-' if mov.tipo in ['VENDA','BAIXA','DEVOLUCAO_FORNECEDOR'] else '+' }}{{ mov.quantidade }}
+            </td>
+            <td class="text-center text-secondary">
+              {{ mov.saldo_anterior }} &rarr; <strong>{{ mov.saldo_posterior }}</strong>
+            </td>
+            <td class="small">
+              {% if mov.nf_numero %}
+                <a href="{{ url_for('estoque.nota_fiscal_detalhe', nota_id=mov.nota_fiscal_id) }}">
+                  NF {{ mov.nf_numero }}
+                </a>
+              {% else %}
+                {{ mov.documento or '-' }}
+              {% endif %}
+            </td>
+            <td class="small text-secondary">{{ mov.observacao or '-' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="text-center text-secondary py-5">
+            Nenhuma movimentacao encontrada com esses filtros.
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer text-secondary small">
+    Exibindo {{ movimentacoes | length }} registro(s) - as 300 mais recentes do filtro.
+  </div>
+</div>
+{% endblock %}

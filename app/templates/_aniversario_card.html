@@ -1,0 +1,22 @@
+<div class="card mb-3">
+  <div class="card-header"><i class="bi bi-calendar-heart me-2 text-marca"></i>Aniversariantes do mes</div>
+  <ul class="list-group list-group-flush">
+    {% for pessoa in aniversariantes_mes %}
+      <li class="list-group-item d-flex justify-content-between align-items-center
+                 {{ 'list-group-item-warning' if pessoa.e_hoje }}">
+        <div>
+          <a href="{{ url_for('clientes.detalhe', cliente_id=pessoa.id) }}"
+             class="text-decoration-none">{{ pessoa.nome }}</a>
+          {% if pessoa.telefone %}<div class="small text-secondary">{{ pessoa.telefone }}</div>{% endif %}
+        </div>
+        <span class="badge {{ 'bg-warning text-dark' if pessoa.e_hoje else 'bg-secondary' }}">
+          {{ 'Hoje!' if pessoa.e_hoje else 'dia ' + pessoa.dia }}
+        </span>
+      </li>
+    {% else %}
+      <li class="list-group-item text-secondary text-center py-3">
+        Nenhum aniversariante este mes.
+      </li>
+    {% endfor %}
+  </ul>
+</div>

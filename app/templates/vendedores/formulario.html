@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block titulo %}{{ 'Novo vendedor' if novo else 'Editar vendedor' }}{% endblock %}
+{% block cabecalho %}{{ 'Novo vendedor' if novo else 'Editar vendedor' }}{% endblock %}
+{% block subcabecalho %}
+  O percentual de comissao e aplicado sobre o total de cada venda registrada.
+{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('vendedores.listar') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Voltar
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<form method="post" class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person-badge me-2 text-marca"></i>Dados do vendedor</div>
+      <div class="card-body row g-3">
+        <div class="col-12">
+          <label class="form-label" for="nome">Nome completo *</label>
+          <input type="text" class="form-control" id="nome" name="nome" required
+                 value="{{ vendedor.nome }}">
+        </div>
+        <div class="col-12 col-md-7">
+          <label class="form-label" for="telefone">Telefone</label>
+          <input type="text" class="form-control" id="telefone" name="telefone"
+                 value="{{ vendedor.telefone }}">
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="percentual_comissao">Comissao (%)</label>
+          <div class="input-group">
+            <input type="number" step="0.1" min="0" max="100" class="form-control"
+                   id="percentual_comissao" name="percentual_comissao"
+                   value="{{ '%.1f' % vendedor.percentual_comissao }}">
+            <span class="input-group-text">%</span>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                   {{ 'checked' if vendedor.ativo }}>
+            <label class="form-check-label" for="ativo">Vendedor ativo</label>
+          </div>
+        </div>
+        {% if not novo %}
+          <div class="col-12">
+            <div class="alert alert-info small mb-0">
+              Alterar o percentual afeta apenas as proximas vendas. As comissoes ja
+              registradas mantem o percentual vigente na data da venda.
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-file-earmark-text me-2 text-marca"></i>Documentos
+        <span class="small text-secondary">(cadastro exigido por seguranca e compliance)</span>
+      </div>
+      <div class="card-body row g-3">
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="data_nascimento">Data de nascimento *</label>
+          <input type="date" class="form-control" id="data_nascimento" name="data_nascimento"
+                 required value="{{ vendedor.data_nascimento }}">
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="cpf">CPF *</label>
+          <input type="text" class="form-control" id="cpf" name="cpf" required
+                 value="{{ vendedor.cpf }}" placeholder="000.000.000-00" maxlength="14">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="rg">RG *</label>
+          <input type="text" class="form-control" id="rg" name="rg" required
+                 value="{{ vendedor.rg }}" placeholder="00.000.000-0">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i class="bi bi-geo-alt me-2 text-marca"></i>Endereco completo</div>
+      <div class="card-body row g-3">
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="cep">CEP *</label>
+          <input type="text" class="form-control" id="cep" name="cep" required
+                 value="{{ vendedor.cep }}" placeholder="00000-000" maxlength="9">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="rua">Rua *</label>
+          <input type="text" class="form-control" id="rua" name="rua" required
+                 value="{{ vendedor.rua }}">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="numero">Numero *</label>
+          <input type="text" class="form-control" id="numero" name="numero" required
+                 value="{{ vendedor.numero }}">
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="bairro">Bairro *</label>
+          <input type="text" class="form-control" id="bairro" name="bairro" required
+                 value="{{ vendedor.bairro }}">
+        </div>
+        <div class="col-9 col-md-5">
+          <label class="form-label" for="cidade">Cidade *</label>
+          <input type="text" class="form-control" id="cidade" name="cidade" required
+                 value="{{ vendedor.cidade }}">
+        </div>
+        <div class="col-3 col-md-2">
+          <label class="form-label" for="uf">UF *</label>
+          <input type="text" class="form-control text-uppercase" id="uf" name="uf" required
+                 value="{{ vendedor.uf }}" maxlength="2">
+        </div>
+      </div>
+      <div class="card-footer text-end">
+        <button type="submit" class="btn btn-marca fw-semibold">
+          <i class="bi bi-check2 me-1"></i>{{ 'Cadastrar vendedor' if novo else 'Salvar alteracoes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

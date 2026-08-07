@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block cabecalho %}{{ titulo }}{% endblock %}
+{% block subcabecalho %}{{ subtitulo }}{% endblock %}
+
+{% block acoes %}
+  <a href="{{ url_for('estoque.notas_fiscais', tipo=tipo) }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-card-list me-1"></i>Listagem de Notas Fiscais
+  </a>
+  <a href="{{ url_for('estoque.movimentacoes', tipo=tipo) }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-clock-history me-1"></i>Ver movimentacoes
+  </a>
+{% endblock %}
+
+{% block conteudo %}
+<form method="post" action="{{ acao }}" id="form-lote">
+
+  <div id="passo-nf" class="row justify-content-center">
+    <div class="col-12 col-md-7 col-lg-5">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-receipt me-2 text-marca"></i>Nota fiscal</div>
+        <div class="card-body">
+          <label class="form-label fw-semibold" for="numero_nf">Qual o numero da NF?</label>
+          <input type="text" class="form-control form-control-lg" id="numero_nf" name="numero_nf"
+                 required placeholder="Ex.: 000123" autocomplete="off" autofocus>
+          <div class="form-text mb-3">
+            Todos os produtos que voce adicionar a seguir ficam agrupados dentro desta NF.
+          </div>
+          <button type="button" id="btn-avancar-nf" class="btn btn-{{ cor }} w-100 fw-semibold">
+            Avancar <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="passo-produtos" class="d-none">
+    <div class="alert alert-light border d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <span>
+        NF <strong id="nf-confirmada" class="text-marca"></strong> &middot;
+        Quais produtos voce deseja atrelar a essa NF?
+      </span>
+      <button type="button" id="btn-trocar-nf" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil me-1"></i>Trocar NF
+      </button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12 col-xl-8">
+        <div class="card mb-3">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="bi bi-upc-scan me-2 text-marca"></i>Itens por codigo do produto</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-adicionar">
+              <i class="bi bi-plus-lg me-1"></i>Adicionar linha
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table tabela-compacta align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 18%">Codigo do produto</th>
+                  <th style="width: 14%">Tamanho</th>
+                  <th style="width: 16%">Cor</th>
+                  <th style="width: 12%">Quantidade</th>
+                  <th>Produto</th>
+                  <th style="width: 48px"></th>
+                </tr>
+              </thead>
+              <tbody id="linhas-lote"></tbody>
+            </table>
+          </div>
+          <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="text-secondary small">
+              Use <strong>Ler codigo</strong> para abrir a camera ou digite os 5 numeros.
+              O sistema busca o modelo no catalogo; escolha tamanho, cor e quantidade.
+            </span>
+            <span class="fw-semibold">Total: <span id="total-pecas">0</span> peca(s)</span>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header">
+            <i class="bi bi-clipboard me-2 text-marca"></i>Colar lista pronta (opcional)
+          </div>
+          <div class="card-body">
+            <p class="small text-secondary mb-2">
+              Uma linha por item, no formato <code>CODIGO;TAMANHO;COR;QTD</code>
+              (ex.: <code>12015;M;PRETA;3</code>). Se o codigo tiver uma so variante
+              cadastrada, pode usar <code>CODIGO;QTD</code> ou apenas
+              <code>CODIGO</code> (assume 1 peca). As linhas coladas aqui somam
+              com as digitadas na grade acima.
+            </p>
+            <textarea class="form-control font-monospace" name="lote_texto" rows="5"
+                      placeholder="LIN-1001;M;3&#10;LIN-1003;P;5"></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="bi bi-journal-text me-2 text-marca"></i>Catalogo de produtos</span>
+            <input type="text" class="form-control form-control-sm" id="filtro-catalogo"
+                   placeholder="Filtrar por codigo ou nome..." style="max-width: 220px">
+          </div>
+          <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+            <table class="table table-sm tabela-compacta mb-0" id="tabela-catalogo">
+              <thead class="table-light" style="position: sticky; top: 0;">
+                <tr><th>Codigo</th><th>Produto</th><th>Tam.</th><th>Cor</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for produto in catalogo_referencia %}
+                  <tr data-busca="{{ (produto.codigo_fabricante ~ ' ' ~ produto.nome ~ ' ' ~ produto.cor) | lower }}">
+                    <td><span class="codigo">{{ produto.codigo_fabricante }}</span></td>
+                    <td class="small">{{ produto.nome }}</td>
+                    <td class="small">{{ produto.tamanho or '-' }}</td>
+                    <td class="small text-secondary">{{ produto.cor or '-' }}</td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-sm btn-outline-secondary btn-usar-codigo"
+                              data-codigo="{{ produto.codigo_fabricante }}">
+                        Usar
+                      </button>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="5" class="text-center text-secondary py-3">
+                    Nenhum produto cadastrado no catalogo ainda.
+                  </td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer small text-secondary">
+            Clique em <strong>Usar</strong> para preencher a proxima linha vazia da grade
+            com este codigo.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <div class="card mb-3">
+          <div class="card-header"><i class="bi bi-info-circle me-2 text-marca"></i>Dados da NF</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label" for="fornecedor">{{ rotulo_fornecedor }}</label>
+              <input type="text" class="form-control" id="fornecedor" name="fornecedor">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="data_nf">Data da NF</label>
+              <input type="date" class="form-control" id="data_nf" name="data_nf" value="{{ HOJE }}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="motivo">Motivo</label>
+              <select class="form-select" id="motivo" name="motivo">
+                <option value="">Selecione...</option>
+                {% for motivo in motivos %}
+                  <option value="{{ motivo }}">{{ motivo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="observacao">Observacao</label>
+              <textarea class="form-control" id="observacao" name="observacao" rows="3"
+                        placeholder="Detalhe livre. Se preenchido, substitui o motivo."></textarea>
+            </div>
+            <button type="submit" class="btn btn-{{ cor }} w-100 fw-semibold">
+              <i class="bi bi-check2-circle me-1"></i>{{ rotulo_botao }}
+            </button>
+            <p class="small text-secondary mt-3 mb-0">
+              {% if tipo == 'ENTRADA' %}
+                As pecas serao somadas ao estoque de cada codigo/tamanho.
+              {% else %}
+                As pecas serao abatidas do estoque. Se algum codigo/tamanho estiver
+                invalido ou sem saldo, <strong>nada e gravado</strong> - o lote
+                inteiro volta para correcao.
+              {% endif %}
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><i class="bi bi-clock-history me-2"></i>Ultimos lancamentos</div>
+          <ul class="list-group list-group-flush">
+            {% for mov in ultimas %}
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between">
+                  <span class="codigo">{{ mov.codigo_fabricante }}</span>
+                  <span class="fw-semibold">{{ mov.quantidade }} un</span>
+                </div>
+                <div class="small text-secondary">
+                  {{ mov.produto_nome }} &middot; {{ mov.data | data_hora_br }}
+                  {%- if mov.nf_numero %} &middot; NF {{ mov.nf_numero }}{% endif %}
+                </div>
+              </li>
+            {% else %}
+              <li class="list-group-item text-secondary text-center py-4">Nenhum lancamento ainda.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<template id="modelo-linha">
+  <tr class="linha-lote">
+    <td>
+      <input type="text" class="form-control codigo-lote" name="codigo[]"
+             list="lista-codigos" placeholder="12015" autocomplete="off"
+             inputmode="numeric" minlength="5" maxlength="5" pattern="[0-9]{5}">
+    </td>
+    <td>
+      <select class="form-select tamanho-lote" name="tamanho[]" disabled>
+        <option value="">--</option>
+      </select>
+    </td>
+    <td>
+      <select class="form-select cor-lote" name="cor[]" disabled>
+        <option value="">--</option>
+      </select>
+    </td>
+    <td>
+      <input type="number" class="form-control qtd-lote" name="quantidade[]"
+             value="1" min="1" step="1">
+    </td>
+    <td class="status-item text-secondary">Digite o codigo</td>
+    <td class="text-end">
+      <button type="button" class="btn btn-sm btn-outline-danger remover-linha" title="Remover linha">
+        <i class="bi bi-trash"></i>
+      </button>
+    </td>
+  </tr>
+</template>
+
+<datalist id="lista-codigos">
+  {% for produto in produtos_disponiveis %}
+    <option value="{{ produto.codigo_fabricante }}">{{ produto.nome }}</option>
+  {% endfor %}
+</datalist>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var grade = new GradeLote({
+    corpo: "linhas-lote",
+    modelo: "modelo-linha",
+    botaoAdicionar: "btn-adicionar",
+    aoAtualizar: function (g) {
+      document.getElementById("total-pecas").textContent = g.totalPecas();
+    }
+  });
+  grade.validaEstoque = {{ 'false' if tipo == 'ENTRADA' else 'true' }};
+
+  for (var i = 0; i < 3; i++) {
+    grade.adicionar();
+  }
+
+  var campoNumeroNf = document.getElementById("numero_nf");
+  var passoNf = document.getElementById("passo-nf");
+  var passoProdutos = document.getElementById("passo-produtos");
+  var nfConfirmada = document.getElementById("nf-confirmada");
+
+  function avancarParaProdutos() {
+    var numero = campoNumeroNf.value.trim();
+    if (!numero) {
+      campoNumeroNf.classList.add("is-invalid");
+      campoNumeroNf.focus();
+      return;
+    }
+    campoNumeroNf.classList.remove("is-invalid");
+    nfConfirmada.textContent = numero;
+    passoNf.classList.add("d-none");
+    passoProdutos.classList.remove("d-none");
+    grade.linhas()[0].querySelector(".codigo-lote").focus();
+  }
+
+  document.getElementById("btn-avancar-nf").addEventListener("click", avancarParaProdutos);
+  campoNumeroNf.addEventListener("keydown", function (evento) {
+    if (evento.key === "Enter") {
+      evento.preventDefault();
+      avancarParaProdutos();
+    }
+  });
+  document.getElementById("btn-trocar-nf").addEventListener("click", function () {
+    passoProdutos.classList.add("d-none");
+    passoNf.classList.remove("d-none");
+    campoNumeroNf.focus();
+  });
+
+  document.querySelectorAll(".btn-usar-codigo").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      grade.preencherProximo(botao.dataset.codigo);
+    });
+  });
+
+  var filtroCatalogo = document.getElementById("filtro-catalogo");
+  if (filtroCatalogo) {
+    filtroCatalogo.addEventListener("input", function () {
+      var termo = filtroCatalogo.value.trim().toLowerCase();
+      document.querySelectorAll("#tabela-catalogo tbody tr[data-busca]").forEach(function (linha) {
+        linha.style.display = linha.dataset.busca.indexOf(termo) === -1 ? "none" : "";
+      });
+    });
+  }
+</script>
+{% endblock %}
