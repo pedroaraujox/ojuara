@@ -1,4 +1,4 @@
-"""Servidor local de producao, publicado somente pelo Cloudflare Tunnel."""
+"""Servidor de producao para execucao local ou em container."""
 
 import os
 
@@ -12,10 +12,11 @@ from app import create_app
 
 def main():
     app = create_app()
+    host = os.environ.get("OJUARA_HOST", "127.0.0.1")
     porta = int(os.environ.get("OJUARA_PORTA", "5000"))
     serve(
         app,
-        host="127.0.0.1",
+        host=host,
         port=porta,
         threads=4,
         clear_untrusted_proxy_headers=True,
