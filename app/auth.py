@@ -12,6 +12,8 @@ VENDEDOR    Vende, atende cliente e recebe crediario. Nao ve custo/margem,
             nao movimenta estoque e so enxerga as proprias vendas.
 """
 
+import hashlib
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import abort, g, redirect, request, session, url_for
@@ -173,6 +175,75 @@ def autenticar(login, senha):
     if not check_password_hash(usuario["senha_hash"], senha or ""):
         return None
     return usuario
+
+
+def _chave_tentativa(login, endereco_ip):
+    origem = "%s|%s" % ((login or "").strip().lower(), endereco_ip or "desconhecido")
+    return hashlib.sha256(origem.encode("utf-8")).hexdigest()
+
+
+def _agora_utc():
+    return datetime.now(timezone.utc)
+
+
+def login_bloqueado(login, endereco_ip):
+    """Informa se o par usuario/IP ainda esta temporariamente bloqueado."""
+    chave = _chave_tentativa(login, endereco_ip)
+    registro = db.query(
+        "SELECT bloqueado_ate FROM tentativas_login WHERE chave = ?", (chave,), one=True
+    )
+    if not registro or not registro["bloqueado_ate"]:
+        return False
+    try:
+        bloqueado_ate = datetime.fromisoformat(registro["bloqueado_ate"])
+    except ValueError:
+        db.execute("DELETE FROM tentativas_login WHERE chave = ?", (chave,))
+        return False
+    if bloqueado_ate > _agora_utc():
+        return True
+    db.execute("DELETE FROM tentativas_login WHERE chave = ?", (chave,))
+    return False
+
+
+def registrar_falha_login(login, endereco_ip):
+    """Registra falha e bloqueia temporariamente ao atingir o limite."""
+    from flask import current_app
+
+    chave = _chave_tentativa(login, endereco_ip)
+    agora = _agora_utc()
+    registro = db.query(
+        "SELECT tentativas FROM tentativas_login WHERE chave = ?", (chave,), one=True
+    )
+    tentativas = (registro["tentativas"] if registro else 0) + 1
+    bloqueado_ate = None
+    if tentativas >= current_app.config["LOGIN_MAX_TENTATIVAS"]:
+        bloqueado_ate = agora + timedelta(
+            minutes=current_app.config["LOGIN_BLOQUEIO_MINUTOS"]
+        )
+    db.execute(
+        """INSERT INTO tentativas_login
+               (chave, tentativas, primeira_em, ultima_em, bloqueado_ate)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(chave) DO UPDATE SET
+               tentativas = excluded.tentativas,
+               ultima_em = excluded.ultima_em,
+               bloqueado_ate = excluded.bloqueado_ate""",
+        (
+            chave,
+            tentativas,
+            agora.isoformat(timespec="seconds"),
+            agora.isoformat(timespec="seconds"),
+            bloqueado_ate.isoformat(timespec="seconds") if bloqueado_ate else None,
+        ),
+    )
+    return bloqueado_ate is not None
+
+
+def limpar_falhas_login(login, endereco_ip):
+    db.execute(
+        "DELETE FROM tentativas_login WHERE chave = ?",
+        (_chave_tentativa(login, endereco_ip),),
+    )
 
 
 def iniciar_sessao(usuario):

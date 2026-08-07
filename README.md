@@ -55,6 +55,24 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 
 Abra **http://127.0.0.1:5000** no navegador. O sistema exige login.
 
+### Execucao de producao local
+
+A publicacao pelo Cloudflare Tunnel usa `servidor_producao.py`, servido por
+Waitress somente em `127.0.0.1:5000`. O inicializador `iniciar_ojuara.ps1` exige
+as configuracoes secretas no ambiente do usuario Windows e sempre define
+`OJUARA_SEED=0`; dados demonstrativos nunca sao criados nesse modo.
+
+O banco real permanece em `data/ojuara.db` e nao e versionado. A tarefa do
+Windows **Ojuara - Backup Diario** executa `executar_backup.ps1` no login e
+diariamente as 20h, gerando copias verificadas em `backups/` por 30 dias.
+Banco, backups, logs, ambiente virtual e segredos sao ignorados pelo Git.
+
+O fluxo de branches e:
+
+- `desenvolvimento`: trabalho e validacao;
+- `producao`: versao aprovada usada pela copia operacional local;
+- `.producao/`: worktree local ignorada, vinculada exclusivamente a `producao`.
+
 | Perfil              | Usuário      | Senha            |
 |---------------------|--------------|------------------|
 | Super administrador | `superadmin` | `Ojuara@2026`    |
