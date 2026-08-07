@@ -61,10 +61,9 @@ Abra **http://127.0.0.1:5000** no navegador. O sistema exige login.
 A implantação oficial usa Docker na Contabo, Portainer e Nginx Proxy Manager.
 O procedimento completo está em [`docs/implantacao-contabo.md`](docs/implantacao-contabo.md).
 
-Para uso temporário no Windows, `servidor_producao.py` também pode ser
-publicado por um Cloudflare Tunnel. O inicializador `iniciar_ojuara.ps1` exige
-as configurações secretas no ambiente do usuário Windows e sempre define
-`OJUARA_SEED=0`; dados demonstrativos nunca são criados nesse modo.
+O inicializador Windows `iniciar_ojuara.ps1` exige as configurações secretas
+no ambiente do usuário e sempre define `OJUARA_SEED=0`; dados demonstrativos
+nunca são criados nesse modo.
 
 O banco real e os backups não são versionados. Na Contabo, permanecem nos
 diretórios persistentes configurados para a Stack. Banco, backups, logs,

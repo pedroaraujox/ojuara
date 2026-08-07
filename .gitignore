@@ -36,7 +36,6 @@ instance/
 tmp*/
 .tmp_*
 .claude/
-.cloudflared/
 .producao/
 
 # Editores / SO

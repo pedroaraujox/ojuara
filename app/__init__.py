@@ -19,8 +19,8 @@ def create_app(config_object=Config):
             raise RuntimeError(
                 "OJUARA_SECRET_KEY precisa ter ao menos 32 caracteres em producao."
             )
-        # Em producao ha exatamente um proxy reverso confiavel na frente da
-        # aplicacao (Nginx Proxy Manager ou cloudflared local).
+        # Em producao ha exatamente um Nginx Proxy Manager confiavel na frente
+        # da aplicacao.
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     registra_filtros(app)

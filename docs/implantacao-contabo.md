@@ -13,8 +13,8 @@ Crie um registro `A`:
 - destino: IP público da Contabo
 - TTL: `300` durante a implantação
 
-O endereço final será `ojuara.outboxtech.com.br`. Não altere os servidores DNS
-do domínio e não crie um proxy na Cloudflare.
+O endereço final será `ojuara.outboxtech.com.br`. Mantenha os servidores DNS
+atuais do domínio no Registro.br.
 
 ## 2. Diretórios persistentes
 
