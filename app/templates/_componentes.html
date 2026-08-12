@@ -1,0 +1,29 @@
+{# Componentes de interface reutilizaveis.
+   Equivalente, nesta stack (Jinja + CSS), ao /components/ui de um projeto
+   shadcn: um lugar so para as pecas de UI usadas por varias telas. Importe
+   com {% from "_componentes.html" import ... %}. #}
+
+{# Botao com revelacao no hover: o rotulo desliza para fora enquanto o ponto
+   da cor de destaque cresce e preenche a pilula, revelando rotulo + seta.
+   Porte do InteractiveHoverButton (React/Tailwind) para CSS puro; a seta usa
+   Bootstrap Icons, que ja e o conjunto do projeto, no lugar do lucide-react.
+
+   texto  - rotulo do botao
+   href   - se informado, renderiza <a>; senao, <button type=tipo>
+   icone  - classe do Bootstrap Icon revelado (padrao: seta para a direita)
+   classe - classes extras (ex.: "w-100")
+   tipo   - type do <button> quando nao houver href #}
+{% macro botao_interativo(texto, href=none, icone="bi-arrow-right", classe="", tipo="submit") -%}
+  {%- set conteudo %}
+    <span class="btn-interativo-rotulo">{{ texto }}</span>
+    <span class="btn-interativo-revelacao" aria-hidden="true">
+      <span>{{ texto }}</span><i class="bi {{ icone }}"></i>
+    </span>
+    <span class="btn-interativo-ponto" aria-hidden="true"></span>
+  {%- endset %}
+  {%- if href %}
+    <a class="btn-interativo {{ classe }}" href="{{ href }}">{{ conteudo }}</a>
+  {%- else %}
+    <button type="{{ tipo }}" class="btn-interativo {{ classe }}">{{ conteudo }}</button>
+  {%- endif %}
+{%- endmacro %}

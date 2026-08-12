@@ -1,5 +1,12 @@
 /* Ojuara Lingerie - identidade visual - Outbox Tech
  * Tokens de design (tema claro/escuro) + refinamentos sobre o Bootstrap 5.3.
+ *
+ * Direcao visual: iOS. Fundo cinza de sistema com cartoes brancos de canto
+ * arredondado, separadores capilares no lugar de bordas fechadas, tipografia
+ * do sistema (sem webfont), botoes em pilula e uma unica cor de destaque
+ * ("tint") para tudo que e interativo. Nada de versalete, nada de sombra
+ * pesada: o contraste vem da superficie branca sobre o cinza.
+ *
  * O tema e controlado pelo atributo [data-bs-theme] na tag <html>
  * (ver app.js / _head_tema.html) e o Bootstrap ja adapta a maior parte dos
  * componentes sozinho; aqui so entram a marca, tipografia e os ajustes que
@@ -8,69 +15,121 @@
 
 :root,
 [data-bs-theme="light"] {
-  --marca: #8e3b62;
-  --marca-rgb: 142, 59, 98;
-  --marca-hover: #6d2c4b;
-  --marca-clara: #f8eef4;
-  --marca-clara-texto: #6d2c4b;
-  --borda: #e7e1e6;
-  --sombra-cartao: 0 1px 2px rgba(40, 20, 35, .05), 0 1px 1px rgba(40, 20, 35, .03);
-  --sombra-flutuante: 0 16px 40px -16px rgba(60, 20, 45, .22);
+  --marca: #c0396a;
+  --marca-rgb: 192, 57, 106;
+  --marca-hover: #a52e5a;
+  --marca-clara: rgba(192, 57, 106, .12);
+  --marca-clara-texto: #a52e5a;
 
-  --bs-body-bg: #f7f5f8;
-  --bs-body-color: #2a2430;
-  --bs-secondary-color: #6d6475;
-  --bs-border-color: var(--borda);
-  --bs-border-color-translucent: var(--borda);
-  --bs-tertiary-bg: #f1edf2;
-  --bs-emphasis-color: #1c171f;
+  --superficie: #ffffff;
+  --superficie-2: #f2f2f7;   /* systemGroupedBackground */
+  /* Preenchimento de campo translucido de proposito: sobre o cinza da pagina
+     e sobre o branco do cartao ele continua se destacando. Um cinza opaco
+     igual ao fundo faria o campo sumir fora do cartao. */
+  --preenchido: rgba(120, 120, 128, .1);
+  --separador: rgba(60, 60, 67, .16);
+  --borda: var(--separador);
+  --borda-forte: rgba(60, 60, 67, .28);
+  --cinza-suave: rgba(120, 120, 128, .12);   /* secondarySystemFill */
+  --barra-vidro: rgba(249, 249, 249, .82);
+
+  --verde: #34805e;
+  --azul: #2f6fb5;
+  --laranja: #b06a1f;
+  --vermelho: #c0362f;
+
+  --sombra-cartao: none;
+  --sombra-flutuante: 0 10px 30px -8px rgba(0, 0, 0, .18);
+  --altura-topo: 93px;   /* barra fixa: usado pelo painel sticky da entrada de NF */
+
+  --bs-body-bg: var(--superficie-2);
+  --bs-body-color: #1c1c1e;
+  --bs-secondary-color: rgba(60, 60, 67, .62);
+  --bs-border-color: var(--separador);
+  --bs-border-color-translucent: var(--separador);
+  --bs-tertiary-bg: var(--cinza-suave);
+  --bs-secondary-bg: var(--preenchido);
+  --bs-emphasis-color: #000;
 
   --bs-primary: var(--marca);
-  --bs-primary-rgb: 142, 59, 98;
+  --bs-primary-rgb: 192, 57, 106;
   --bs-link-color: var(--marca);
-  --bs-link-color-rgb: 142, 59, 98;
+  --bs-link-color-rgb: 192, 57, 106;
   --bs-link-hover-color: var(--marca-hover);
-  --bs-link-hover-color-rgb: 109, 44, 75;
+  --bs-link-hover-color-rgb: 165, 46, 90;
 
-  --bs-border-radius: .65rem;
-  --bs-border-radius-sm: .5rem;
-  --bs-border-radius-lg: .9rem;
-  --bs-border-radius-xl: 1.1rem;
-  --bs-border-radius-2xl: 1.4rem;
+  --bs-success: var(--verde);   --bs-success-rgb: 52, 128, 94;
+  --bs-info:    var(--azul);    --bs-info-rgb: 47, 111, 181;
+  --bs-warning: var(--laranja); --bs-warning-rgb: 176, 106, 31;
+  --bs-danger:  var(--vermelho);--bs-danger-rgb: 192, 54, 47;
 
-  --bs-focus-ring-color: rgba(142, 59, 98, .2);
-  --bs-body-font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system,
-    "Helvetica Neue", Arial, sans-serif;
+  /* Cantos generosos, no espirito das fichas do iOS. */
+  --bs-border-radius: .75rem;
+  --bs-border-radius-sm: .625rem;
+  --bs-border-radius-lg: .875rem;
+  --bs-border-radius-xl: 1rem;
+  --bs-border-radius-2xl: 1.25rem;
+
+  --bs-focus-ring-color: rgba(var(--marca-rgb), .25);
+  /* Duas fontes com papeis distintos: a serifada de alto contraste so aparece
+     onde o texto e grande - marca, titulo de tela, numero de indicador -, que
+     e onde o contraste dela vira sofisticacao; abaixo de ~20px ela afina
+     demais e atrapalha. Todo o resto, incluindo tabela de valores, fica na
+     sans humanista, que aguenta corpo pequeno. */
+  --bs-body-font-family: "Mulish", -apple-system, BlinkMacSystemFont,
+    "Segoe UI Variable Text", "Segoe UI", system-ui, Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --fonte-titulo: "Bodoni Moda", "Didot", "Bodoni MT", "Times New Roman",
+    Georgia, serif;
 
   color-scheme: light;
 }
 
 [data-bs-theme="dark"] {
-  --marca: #cf6690;
-  --marca-rgb: 207, 102, 144;
-  --marca-hover: #dc85a8;
-  --marca-clara: rgba(207, 102, 144, .16);
-  --marca-clara-texto: #f0b7cd;
-  --borda: #362f3d;
-  --sombra-cartao: 0 1px 2px rgba(0, 0, 0, .35);
-  --sombra-flutuante: 0 20px 45px -18px rgba(0, 0, 0, .6);
+  --marca: #ff7fa8;
+  --marca-rgb: 255, 127, 168;
+  --marca-hover: #ff9cbc;
+  --marca-clara: rgba(255, 127, 168, .18);
+  --marca-clara-texto: #ffb3cb;
 
-  --bs-body-bg: #15121a;
-  --bs-body-color: #ece7ee;
-  --bs-secondary-color: #a89bb0;
-  --bs-border-color: var(--borda);
-  --bs-border-color-translucent: var(--borda);
-  --bs-tertiary-bg: #221d29;
-  --bs-secondary-bg: #221d29;
-  --bs-emphasis-color: #fbf9fc;
+  --superficie: #1c1c1e;
+  --superficie-2: #000000;
+  --preenchido: rgba(120, 120, 128, .26);
+  --separador: rgba(84, 84, 88, .58);
+  --borda: var(--separador);
+  --borda-forte: rgba(120, 120, 128, .6);
+  --cinza-suave: rgba(120, 120, 128, .24);
+  --barra-vidro: rgba(28, 28, 30, .78);
+
+  --verde: #5ec489;
+  --azul: #7ab3f0;
+  --laranja: #e0a44f;
+  --vermelho: #ff8078;
+
+  --sombra-cartao: none;
+  --sombra-flutuante: 0 12px 34px -8px rgba(0, 0, 0, .7);
+
+  --bs-body-bg: var(--superficie-2);
+  --bs-body-color: #ffffff;
+  --bs-secondary-color: rgba(235, 235, 245, .62);
+  --bs-border-color: var(--separador);
+  --bs-border-color-translucent: var(--separador);
+  --bs-tertiary-bg: var(--cinza-suave);
+  --bs-secondary-bg: var(--preenchido);
+  --bs-emphasis-color: #fff;
 
   --bs-primary: var(--marca);
-  --bs-primary-rgb: 207, 102, 144;
+  --bs-primary-rgb: 255, 127, 168;
   --bs-link-color: var(--marca);
-  --bs-link-color-rgb: 207, 102, 144;
+  --bs-link-color-rgb: 255, 127, 168;
   --bs-link-hover-color: var(--marca-hover);
 
-  --bs-focus-ring-color: rgba(207, 102, 144, .3);
+  --bs-success: var(--verde);   --bs-success-rgb: 94, 196, 137;
+  --bs-info:    var(--azul);    --bs-info-rgb: 122, 179, 240;
+  --bs-warning: var(--laranja); --bs-warning-rgb: 224, 164, 79;
+  --bs-danger:  var(--vermelho);--bs-danger-rgb: 255, 128, 120;
+
+  --bs-focus-ring-color: rgba(var(--marca-rgb), .3);
 
   color-scheme: dark;
 }
@@ -82,170 +141,382 @@ html { scroll-behavior: smooth; }
 body {
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
+  font-size: .95rem;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-body > main { max-width: 1600px; margin: 0 auto; }
+.largura-conteudo { max-width: 1400px; margin: 0 auto; }
+body > main { max-width: 1400px; margin: 0 auto; }
 
-h1, h2, h3, h4, h5, h6 { letter-spacing: -.015em; }
+h1, h2, h3, h4, h5, h6 { letter-spacing: -.02em; font-weight: 600; }
 
-::selection { background-color: rgba(var(--marca-rgb), .28); }
+::selection { background-color: rgba(var(--marca-rgb), .24); }
 
-a { text-decoration-thickness: 1px; }
+a { text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Numeral tabular em tudo que alinha valor em coluna. */
+.table, .kpi-valor, .codigo, .valor-tabular { font-variant-numeric: tabular-nums; }
+
+.rotulo-micro {
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--bs-secondary-color);
+}
 
 @media (prefers-reduced-motion: no-preference) {
-  body, .card, .navbar, .dropdown-menu, .btn, .form-control, .form-select,
-  .list-group-item, .alert, .badge, .nav-link, .btn-tema {
-    transition: background-color .16s ease, border-color .16s ease,
-      color .16s ease, box-shadow .16s ease, transform .1s ease;
+  .card, .dropdown-menu, .btn, .form-control, .form-select, .list-group-item,
+  .badge, .nav-pilula, .btn-tema {
+    transition: background-color .18s ease, border-color .18s ease,
+      color .18s ease, box-shadow .18s ease, transform .12s ease;
   }
 }
 
-/* Barra de rolagem discreta, so onde o navegador suporta (webkit). */
-::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--marca-rgb), .28);
+  background-color: rgba(120, 120, 128, .35);
   border-radius: 999px;
-  border: 2px solid var(--bs-body-bg);
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
-::-webkit-scrollbar-thumb:hover { background-color: rgba(var(--marca-rgb), .45); }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(120, 120, 128, .6); }
 
-/* --- navbar ------------------------------------------------------------ */
+/* --- barra do topo -------------------------------------------------------
+   Duas linhas finas e translucidas: identidade + conta em cima, navegacao
+   em pilulas embaixo. Sem menu sanfonado - em tela estreita a linha de
+   navegacao rola na horizontal, como as barras de filtro do iOS. */
 
-.navbar.bg-marca {
-  background-color: var(--marca) !important;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, .08);
+.barra-topo {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background-color: var(--barra-vidro);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separador);
 }
-.navbar-brand { letter-spacing: -.02em; }
+.barra-topo .largura-conteudo { padding: 0 1rem; }
 
-.navbar-dark .navbar-nav .nav-link {
-  color: rgba(255, 255, 255, .82);
-  border-radius: var(--bs-border-radius-sm);
-  padding-top: .45rem;
-  padding-bottom: .45rem;
+.barra-linha {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 52px;
 }
-.navbar-dark .navbar-nav .nav-link:hover,
-.navbar-dark .navbar-nav .nav-link:focus-visible {
-  color: #fff;
-  background-color: rgba(255, 255, 255, .12);
+
+.marca-nome {
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--bs-emphasis-color);
 }
-.navbar-dark .navbar-nav .nav-link.active {
-  color: #fff;
-  background-color: rgba(255, 255, 255, .18);
+.marca-linha {
+  display: block;
+  font-size: .7rem;
+  font-weight: 400;
+  color: var(--bs-secondary-color);
+  letter-spacing: 0;
+}
+a.marca:hover { text-decoration: none; }
+.barra-linha .marca-linha { display: inline; margin-left: .35rem; }
+
+/* Navegacao em pilulas */
+.barra-nav {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  padding-bottom: .5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.barra-nav::-webkit-scrollbar { display: none; }
+.nav-pilula {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .35rem .75rem;
+  border-radius: 999px;
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--bs-secondary-color);
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+}
+.nav-pilula:hover { background-color: var(--cinza-suave); color: var(--bs-body-color); text-decoration: none; }
+.nav-pilula.active {
+  background-color: var(--marca-clara);
+  color: var(--marca);
   font-weight: 600;
 }
-.navbar .dropdown-menu { margin-top: .35rem; }
+.nav-pilula.dropdown-toggle::after { margin-left: .1rem; opacity: .5; }
+
+/* A linha de navegacao rola na horizontal (overflow-x: auto), e isso faria o
+   navegador recortar os menus suspensos - overflow-x sem overflow-y visivel
+   recorta nos dois eixos. Com o .dropdown estatico, o bloco que contem o menu
+   deixa de estar dentro da area rolavel e passa a ser a .barra-topo (que ja e
+   contexto de posicionamento por causa do backdrop-filter), entao o menu
+   escapa do recorte. O Popper continua alinhando pelo gatilho. */
+.barra-nav .dropdown { position: static; }
+.barra-nav .dropdown-menu { margin-top: .3rem; }
+
+/* Busca da barra */
+.busca-topo { position: relative; flex: none; }
+.busca-topo .form-control {
+  width: 190px;
+  padding-left: 2rem;
+  border-radius: 999px;
+  font-size: .85rem;
+}
+.busca-topo .form-control:focus { width: 240px; }
+.busca-topo .bi {
+  position: absolute;
+  left: .7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--bs-secondary-color);
+  font-size: .8rem;
+  pointer-events: none;
+}
 
 .btn-tema {
-  width: 2.3rem;
-  height: 2.3rem;
+  width: 2rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, .14);
-  color: #fff;
+  background-color: var(--cinza-suave);
+  color: var(--bs-body-color);
   border: none;
+  font-size: .85rem;
   flex: none;
 }
-.btn-tema:hover { background-color: rgba(255, 255, 255, .26); color: #fff; }
-.btn-tema:active { transform: scale(.9); }
+.btn-tema:hover { background-color: var(--borda-forte); }
+.btn-tema:active { transform: scale(.92); }
 .btn-tema .bi-sun-fill { display: none; }
 [data-bs-theme="dark"] .btn-tema .bi-moon-stars-fill { display: none; }
 [data-bs-theme="dark"] .btn-tema .bi-sun-fill { display: inline-block; }
 
+.avatar-usuario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--marca);
+  font-size: .78rem;
+  font-weight: 600;
+  color: #fff;
+  flex: none;
+}
+.menu-conta { color: var(--bs-body-color); }
+.menu-conta:hover { text-decoration: none; }
+
+/* --- botao com revelacao no hover ----------------------------------------
+   Porte do InteractiveHoverButton: o ponto da cor de destaque cresce ate
+   preencher a pilula enquanto o rotulo sai e volta acompanhado da seta.
+   O estado tambem responde a :focus-visible - navegando por teclado a
+   animacao acontece igual, coisa que a versao original nao faz. */
+
+.btn-interativo {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  min-width: 8rem;
+  padding: .5rem 1rem;
+  border: 1px solid var(--separador);
+  border-radius: 999px;
+  background-color: var(--superficie);
+  color: var(--bs-body-color);
+  font-size: .9rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.btn-interativo:hover { text-decoration: none; }
+.btn-interativo-rotulo {
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+  transform: translateX(2px);
+  transition: transform .3s ease, opacity .3s ease;
+}
+.btn-interativo-revelacao {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  color: #fff;
+  opacity: 0;
+  transform: translateX(3rem);
+  transition: transform .3s ease, opacity .3s ease;
+}
+/* O original ancora o ponto em 20% da largura, o que so funciona na largura
+   fixa do demo: com rotulo mais longo ele encosta no texto. Aqui a distancia
+   da borda e fixa, entao o ponto fica igual em qualquer largura de botao. */
+.btn-interativo-ponto {
+  position: absolute;
+  left: .85rem;
+  top: 50%;
+  margin-top: -.25rem;
+  z-index: 1;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 999px;
+  background-color: var(--marca);
+  transition: all .3s ease;
+}
+.btn-interativo:hover .btn-interativo-rotulo,
+.btn-interativo:focus-visible .btn-interativo-rotulo {
+  transform: translateX(3rem);
+  opacity: 0;
+}
+.btn-interativo:hover .btn-interativo-revelacao,
+.btn-interativo:focus-visible .btn-interativo-revelacao {
+  transform: translateX(-2px);
+  opacity: 1;
+}
+.btn-interativo:hover .btn-interativo-ponto,
+.btn-interativo:focus-visible .btn-interativo-ponto {
+  left: 0;
+  top: 0;
+  margin-top: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  transform: scale(1.6);
+}
+.btn-interativo:active { transform: scale(.97); }
+[data-bs-theme="dark"] .btn-interativo-revelacao { color: #1c1c1e; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-interativo-rotulo,
+  .btn-interativo-revelacao,
+  .btn-interativo-ponto { transition: none; }
+}
+
+/* --- titulo de pagina ---------------------------------------------------- */
+
+.cabecalho-pagina {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+.pagina-titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 2.1rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -.005em;
+  margin: 0;
+  color: var(--bs-emphasis-color);
+}
+.pagina-apoio {
+  display: block;
+  margin-top: .15rem;
+  font-size: .875rem;
+  color: var(--bs-secondary-color);
+}
+
 /* --- cartoes ------------------------------------------------------------ */
 
 /* O Bootstrap define --bs-card-bg localmente dentro de .card (herdado de
-   --bs-body-bg por padrao), entao um cartao nao ganha uma superficie
-   distinta do fundo da pagina so por sobrescrever a variavel no :root - e
-   preciso redeclarar aqui, com a mesma especificidade, para criar a
-   sensacao de "camada elevada" (mais perceptivel no tema escuro). */
+   --bs-body-bg por padrao), entao um cartao nao ganha superficie propria so
+   por sobrescrever a variavel no :root - e preciso redeclarar aqui, com a
+   mesma especificidade. Mesma coisa vale para .dropdown-menu e
+   .list-group-item logo abaixo. */
 .card {
-  --bs-card-bg: #ffffff;
-  --bs-card-cap-bg: #ffffff;
-  border: 1px solid var(--bs-border-color);
+  --bs-card-bg: var(--superficie);
+  --bs-card-cap-bg: transparent;
+  --bs-card-border-color: transparent;
+  --bs-card-border-radius: var(--bs-border-radius-lg);
+  --bs-card-inner-border-radius: var(--bs-border-radius);
+  border: 0;
   box-shadow: var(--sombra-cartao);
 }
-[data-bs-theme="dark"] .card {
-  --bs-card-bg: #1c1822;
-  --bs-card-cap-bg: #1c1822;
-}
 .card-header {
+  font-size: .95rem;
   font-weight: 600;
-  letter-spacing: -.005em;
+  letter-spacing: -.01em;
+  color: var(--bs-body-color);
+  border-bottom: 1px solid var(--separador);
+  padding: .8rem 1rem;
+}
+.card-footer {
+  background-color: transparent;
+  border-top: 1px solid var(--separador);
+  padding: .75rem 1rem;
 }
 
-/* Mesmo caso do .card: o Bootstrap define --bs-dropdown-bg localmente
-   dentro de .dropdown-menu (herdado do body), entao o menu suspenso
-   precisa da redeclaracao aqui para ganhar uma superficie propria. */
 .dropdown-menu {
-  --bs-dropdown-bg: #ffffff;
-  --bs-dropdown-link-hover-bg: rgba(var(--marca-rgb), .09);
+  --bs-dropdown-bg: var(--superficie);
+  --bs-dropdown-border-color: var(--separador);
+  --bs-dropdown-border-radius: var(--bs-border-radius-lg);
+  --bs-dropdown-link-hover-bg: var(--cinza-suave);
+  --bs-dropdown-item-padding-y: .5rem;
   box-shadow: var(--sombra-flutuante);
+  font-size: .9rem;
+  padding: .35rem;
 }
-[data-bs-theme="dark"] .dropdown-menu {
-  --bs-dropdown-bg: #211c28;
-  --bs-dropdown-border-color: var(--borda);
-}
+.dropdown-item { border-radius: var(--bs-border-radius-sm); }
+.dropdown-header { font-size: .8rem; }
 
-/* Idem para itens de lista dentro de cartoes (list-group-flush): sem isso
-   eles ficam com a cor do fundo da pagina, nao do cartao que os envolve. */
-.list-group-item { --bs-list-group-bg: #ffffff; }
-[data-bs-theme="dark"] .list-group-item { --bs-list-group-bg: #1c1822; }
-
-/* Cartoes de indicador do painel: em vez da tarja lateral solida (cliche de
-   template pronto), um degrade sutil na cor do status + numero destacado. */
-.kpi { position: relative; overflow: hidden; }
-.kpi::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(160deg, rgba(var(--marca-rgb), .08), transparent 60%);
-  pointer-events: none;
+.list-group-item {
+  --bs-list-group-bg: var(--superficie);
+  --bs-list-group-border-color: var(--separador);
+  padding: .75rem 1rem;
 }
-.kpi .card-body { position: relative; }
+.list-group-flush > .list-group-item:last-child { border-bottom: 0; }
+
+/* Indicadores: numero grande e limpo, sem tarja nem degrade. */
+.kpi .card-body { padding: 1rem 1.1rem; }
 .kpi .kpi-rotulo {
-  font-size: .72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
+  font-size: .8rem;
+  font-weight: 500;
   color: var(--bs-secondary-color);
 }
 .kpi .kpi-valor {
-  font-size: 1.65rem;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -.02em;
-  color: var(--marca);
+  font-family: var(--fonte-titulo);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  margin: .15rem 0 .1rem;
+  color: var(--bs-emphasis-color);
 }
-.kpi.kpi-alerta::before { background: linear-gradient(160deg, rgba(217, 83, 79, .12), transparent 60%); }
-.kpi.kpi-alerta .kpi-valor { color: #d9534f; }
-.kpi.kpi-ok::before { background: linear-gradient(160deg, rgba(47, 133, 90, .12), transparent 60%); }
-.kpi.kpi-ok .kpi-valor { color: #2f855a; }
-.kpi.kpi-info::before { background: linear-gradient(160deg, rgba(43, 108, 176, .12), transparent 60%); }
-.kpi.kpi-info .kpi-valor { color: #2b6cb0; }
-
-[data-bs-theme="dark"] .kpi.kpi-alerta .kpi-valor { color: #f19490; }
-[data-bs-theme="dark"] .kpi.kpi-ok .kpi-valor { color: #66c393; }
-[data-bs-theme="dark"] .kpi.kpi-info .kpi-valor { color: #7db1e8; }
+.kpi.kpi-alerta .kpi-valor { color: var(--vermelho); }
 
 /* --- tabelas ------------------------------------------------------------ */
 
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--separador);
+  margin-bottom: 0;
+}
+.table > :not(caption) > * > * { padding: .7rem .85rem; }
 .tabela-compacta td, .tabela-compacta th {
-  padding-top: .45rem;
-  padding-bottom: .45rem;
+  padding-top: .6rem;
+  padding-bottom: .6rem;
   vertical-align: middle;
 }
-
+.table > thead { --bs-table-bg: transparent; }
 thead.table-light, tfoot.table-light,
 .table > :not(caption) > tr > .table-light {
-  font-size: .72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .05em;
+  font-size: .8rem;
+  font-weight: 500;
   color: var(--bs-secondary-color);
 }
 /* As variantes contextuais de tabela do Bootstrap (.table-light,
@@ -253,52 +524,165 @@ thead.table-light, tfoot.table-light,
    sempre, independente do tema (nao sao "subtle colors" adaptaveis) - por
    isso os overrides genericos aqui, valendo em qualquer elemento que
    carregue a classe (thead, tfoot, tr ou celulas). */
-[data-bs-theme="dark"] .table-light {
-  --bs-table-bg: #241f2b;
-  --bs-table-color: var(--bs-body-color);
-  --bs-table-border-color: var(--borda);
-}
-[data-bs-theme="dark"] .table-secondary {
-  --bs-table-bg: #2a2530;
+.table-light {
+  --bs-table-bg: transparent;
   --bs-table-color: var(--bs-secondary-color);
-  --bs-table-border-color: var(--borda);
+  --bs-table-border-color: var(--separador);
 }
-[data-bs-theme="dark"] .table-danger {
-  --bs-table-bg: rgba(217, 83, 79, .18);
-  --bs-table-color: #f1b4b1;
-  --bs-table-border-color: rgba(217, 83, 79, .3);
+.table-secondary {
+  --bs-table-bg: var(--cinza-suave);
+  --bs-table-color: var(--bs-secondary-color);
+  --bs-table-border-color: var(--separador);
+}
+.table-danger {
+  --bs-table-bg: rgba(var(--bs-danger-rgb), .12);
+  --bs-table-color: var(--vermelho);
+  --bs-table-border-color: var(--separador);
 }
 .table-hover > tbody > tr:hover > * {
-  --bs-table-accent-bg: rgba(var(--marca-rgb), .06);
+  --bs-table-accent-bg: var(--cinza-suave);
+  --bs-table-bg-state: var(--cinza-suave);
 }
 
+/* Link dentro de tabela herda a tinta do texto: uma coluna inteira colorida
+   polui a leitura dos dados. A cor de destaque fica para o hover. */
+.table a:not(.btn) { color: var(--bs-body-color); }
+.table a:not(.btn):hover { color: var(--marca); }
+
 .codigo {
-  font-family: "Consolas", "SFMono-Regular", ui-monospace, monospace;
-  font-weight: 600;
-  letter-spacing: .02em;
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", monospace;
+  font-weight: 500;
+  font-size: .85em;
 }
 
 /* --- formularios e botoes ------------------------------------------------ */
 
-.btn { font-weight: 600; letter-spacing: -.005em; }
+/* Pilulas, sem versalete: a assinatura dos controles do iOS. */
+.btn {
+  --bs-btn-border-radius: 999px;
+  font-size: .9rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  padding: .5rem 1.1rem;
+  border-radius: 999px;
+}
+.btn-sm { font-size: .82rem; padding: .35rem .8rem; }
+.btn-lg { font-size: 1rem; padding: .65rem 1.4rem; }
+.btn:active { transform: scale(.97); }
 
-.btn-marca {
+.btn-marca, .btn-primary {
   background-color: var(--marca);
   border-color: var(--marca);
   color: #fff;
 }
-.btn-marca:hover, .btn-marca:focus {
+.btn-marca:hover, .btn-marca:focus,
+.btn-primary:hover, .btn-primary:focus {
   background-color: var(--marca-hover);
   border-color: var(--marca-hover);
   color: #fff;
 }
+[data-bs-theme="dark"] .btn-marca,
+[data-bs-theme="dark"] .btn-marca:hover,
+[data-bs-theme="dark"] .btn-primary,
+[data-bs-theme="dark"] .btn-primary:hover { color: #1c1c1e; }
+
+/* Os .btn-outline-* do Bootstrap fixam o hex dentro da propria classe (mesmo
+   caso do --bs-card-bg la em cima), entao precisam ser redeclarados. Aqui
+   eles deixam de ser "contorno" e viram botao de preenchimento suave, que e
+   como o iOS trata acao secundaria. */
+.btn-outline-primary, .btn-outline-success, .btn-outline-info,
+.btn-outline-warning, .btn-outline-danger, .btn-outline-secondary {
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-border-color: transparent;
+  border: 0;
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--marca); --bs-btn-bg: var(--marca-clara);
+  --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--marca);
+  --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--marca);
+}
+.btn-outline-success {
+  --bs-btn-color: var(--verde); --bs-btn-bg: rgba(var(--bs-success-rgb), .13);
+  --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--verde);
+  --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--verde);
+}
+.btn-outline-info {
+  --bs-btn-color: var(--azul); --bs-btn-bg: rgba(var(--bs-info-rgb), .13);
+  --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--azul);
+  --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--azul);
+}
+.btn-outline-warning {
+  --bs-btn-color: var(--laranja); --bs-btn-bg: rgba(var(--bs-warning-rgb), .15);
+  --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--laranja);
+  --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--laranja);
+}
+.btn-outline-danger {
+  --bs-btn-color: var(--vermelho); --bs-btn-bg: rgba(var(--bs-danger-rgb), .13);
+  --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--vermelho);
+  --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--vermelho);
+}
+.btn-outline-secondary {
+  --bs-btn-color: var(--bs-body-color); --bs-btn-bg: var(--cinza-suave);
+  --bs-btn-hover-color: var(--bs-body-color); --bs-btn-hover-bg: var(--borda-forte);
+  --bs-btn-active-color: var(--bs-body-color); --bs-btn-active-bg: var(--borda-forte);
+}
+[data-bs-theme="dark"] .btn-outline-primary:hover,
+[data-bs-theme="dark"] .btn-outline-success:hover,
+[data-bs-theme="dark"] .btn-outline-info:hover,
+[data-bs-theme="dark"] .btn-outline-warning:hover,
+[data-bs-theme="dark"] .btn-outline-danger:hover {
+  --bs-btn-hover-color: #1c1c1e;
+}
+.btn-success { background-color: var(--verde); border-color: var(--verde); }
+.btn-danger  { background-color: var(--vermelho); border-color: var(--vermelho); }
 
 .text-marca { color: var(--marca) !important; }
+.bg-marca { background-color: var(--marca) !important; }
 .bg-marca-clara { background-color: var(--marca-clara) !important; color: var(--marca-clara-texto); }
 
+.badge {
+  font-weight: 600;
+  font-size: .75rem;
+  padding: .3em .65em;
+  border-radius: 999px;
+}
+
+.form-label {
+  font-size: .82rem;
+  font-weight: 500;
+  color: var(--bs-secondary-color);
+  margin-bottom: .3rem;
+}
+/* Campos preenchidos, sem borda visivel - o padrao dos formularios do iOS. */
+.form-control, .form-select {
+  background-color: var(--preenchido);
+  border: 1px solid transparent;
+  border-radius: var(--bs-border-radius-sm);
+  padding: .5rem .75rem;
+  font-size: .92rem;
+  color: var(--bs-body-color);
+}
+.form-control::placeholder { color: var(--bs-secondary-color); }
 .form-control:focus, .form-select:focus {
+  background-color: var(--superficie);
   border-color: var(--marca);
-  box-shadow: 0 0 0 .2rem rgba(var(--marca-rgb), .16);
+  box-shadow: 0 0 0 3px rgba(var(--marca-rgb), .18);
+}
+.input-group-text {
+  background-color: var(--preenchido);
+  border: 1px solid transparent;
+  color: var(--bs-secondary-color);
+}
+/* Botao colado num campo nao pode ser pilula: acompanha o canto do campo. */
+.input-group > .btn {
+  border-radius: 0 var(--bs-border-radius-sm) var(--bs-border-radius-sm) 0;
+}
+.input-group > .btn:first-child {
+  border-radius: var(--bs-border-radius-sm) 0 0 var(--bs-border-radius-sm);
+}
+.form-check-input {
+  border-color: var(--borda-forte);
 }
 .form-check-input:checked {
   background-color: var(--marca);
@@ -306,23 +690,28 @@ thead.table-light, tfoot.table-light,
 }
 .form-check-input:focus {
   border-color: var(--marca);
-  box-shadow: 0 0 0 .2rem rgba(var(--marca-rgb), .16);
-}
-
-.dropdown-item:hover, .dropdown-item:focus {
-  background-color: rgba(var(--marca-rgb), .09);
-  color: var(--bs-emphasis-color);
-}
-.dropdown-item.active, .dropdown-item:active {
-  background-color: var(--marca);
-  color: #fff;
+  box-shadow: 0 0 0 3px rgba(var(--marca-rgb), .18);
 }
 
 .list-group-item-action:hover, .list-group-item-action:focus {
-  background-color: rgba(var(--marca-rgb), .06);
+  background-color: var(--cinza-suave);
   color: inherit;
-  z-index: 1;
 }
+
+/* Avisos: preenchimento suave da cor, texto na mesma familia. */
+.alert {
+  border: 0;
+  border-radius: var(--bs-border-radius);
+  background-color: var(--cinza-suave);
+  color: var(--bs-body-color);
+  padding: .8rem 1rem;
+}
+.alert-success { background-color: rgba(var(--bs-success-rgb), .12); }
+.alert-danger  { background-color: rgba(var(--bs-danger-rgb), .12); }
+.alert-warning { background-color: rgba(var(--bs-warning-rgb), .14); }
+.alert-info    { background-color: rgba(var(--bs-info-rgb), .12); }
+.alert-primary { background-color: var(--marca-clara); }
+.alert .alert-link { color: var(--marca); }
 
 /* Linhas da grade de lote */
 .linha-lote .status-item { font-size: .8rem; min-height: 1.2rem; }
@@ -332,18 +721,24 @@ thead.table-light, tfoot.table-light,
   min-height: 112px;
   padding: .85rem;
   color: var(--bs-body-color);
-  background: var(--bs-body-bg);
-  border: 1px solid var(--borda);
-  border-radius: .75rem;
+  background: var(--preenchido);
+  border: 1px solid transparent;
+  border-radius: var(--bs-border-radius);
   transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 .produto-selecao-nf:hover, .produto-selecao-nf:focus-visible {
   border-color: var(--marca);
-  box-shadow: 0 0 0 .2rem rgba(var(--marca-rgb), .12);
+  box-shadow: 0 0 0 3px rgba(var(--marca-rgb), .14);
   transform: translateY(-1px);
   outline: 0;
 }
-.painel-itens-nf { position: sticky; top: 88px; }
+.painel-itens-nf { position: sticky; top: calc(var(--altura-topo) + 12px); }
+.modal-content {
+  border: 0;
+  border-radius: var(--bs-border-radius-xl);
+  background-color: var(--superficie);
+}
+.modal-header, .modal-footer { border-color: var(--separador); }
 .modal video { object-fit: cover; }
 .mira-leitor {
   position: absolute;
@@ -351,66 +746,204 @@ thead.table-light, tfoot.table-light,
   right: 8%;
   top: 34%;
   height: 32%;
-  border: 3px solid rgba(255, 255, 255, .9);
-  border-radius: .5rem;
-  box-shadow: 0 0 0 999px rgba(0, 0, 0, .28);
+  border: 2px solid rgba(255, 255, 255, .9);
+  border-radius: .75rem;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, .3);
   pointer-events: none;
 }
 
 .barra-progresso {
   height: 6px;
-  border-radius: 3px;
-  background-color: var(--bs-tertiary-bg);
+  border-radius: 999px;
+  background-color: var(--cinza-suave);
   overflow: hidden;
 }
 .barra-progresso > span {
   display: block;
   height: 100%;
+  border-radius: 999px;
   background-color: var(--marca);
 }
 
-.badge-vencida { background-color: #c53030; }
+.badge-vencida { background-color: var(--vermelho); }
+
+footer.rodape {
+  font-size: .8rem;
+  color: var(--bs-secondary-color);
+  padding: 2rem 1rem 2.5rem;
+  text-align: center;
+}
+
+/* --- animacoes -----------------------------------------------------------
+   Entrada encadeada: cada peca sobe e aparece com um atraso proprio.
+   "both" mantem o estado inicial antes de comecar, senao a tela pisca
+   inteira antes da animacao rodar. */
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.surge { animation: surgir .6s cubic-bezier(.22, .61, .36, 1) both; }
+.atraso-1 { animation-delay: .05s; }
+.atraso-2 { animation-delay: .12s; }
+.atraso-3 { animation-delay: .19s; }
+.atraso-4 { animation-delay: .26s; }
+.atraso-5 { animation-delay: .33s; }
+.atraso-6 { animation-delay: .40s; }
+
+/* Entrada automatica das telas internas: o involucro .conteudo-pagina (posto
+   no base.html) encadeia os filhos diretos e, quando o conteudo comeca por
+   uma .row, as colunas dessa linha - que e o formato da maioria das telas
+   (grade de indicadores, cartoes lado a lado). Assim nenhum template precisa
+   marcar classe de animacao.
+   Os passos sao curtos de proposito: numa tela cheia de dados, encadeamento
+   longo da sensacao de lentidao, nao de capricho. */
+/* A .row em si fica de fora: se ela e as colunas animassem juntas, o
+   deslocamento e o fade se somariam e o bloco andaria o dobro. Anima quem
+   tem forma propria - a coluna. */
+/* Modal fica de fora: e filho direto do conteudo em algumas telas (leitura
+   por camera), mas nasce escondido - nao faz parte da entrada da pagina. */
+.conteudo-pagina > *:not(.row):not(.modal),
+.conteudo-pagina > .row > [class*="col-"] {
+  animation: surgir .5s cubic-bezier(.22, .61, .36, 1) both;
+  animation-delay: .16s;
+}
+.conteudo-pagina > *:nth-child(1):not(.row):not(.modal),
+.conteudo-pagina > .row > [class*="col-"]:nth-child(1) { animation-delay: .04s; }
+.conteudo-pagina > *:nth-child(2):not(.row),
+.conteudo-pagina > .row > [class*="col-"]:nth-child(2) { animation-delay: .07s; }
+.conteudo-pagina > *:nth-child(3):not(.row),
+.conteudo-pagina > .row > [class*="col-"]:nth-child(3) { animation-delay: .10s; }
+.conteudo-pagina > *:nth-child(4):not(.row),
+.conteudo-pagina > .row > [class*="col-"]:nth-child(4) { animation-delay: .13s; }
+.conteudo-pagina > *:nth-child(5):not(.row),
+.conteudo-pagina > .row > [class*="col-"]:nth-child(5) { animation-delay: .16s; }
+
+/* Janela modal subindo, no lugar do deslocamento seco do Bootstrap. */
+.modal.fade .modal-dialog {
+  transform: translateY(14px) scale(.97);
+  transition: transform .28s cubic-bezier(.22, .61, .36, 1);
+}
+.modal.show .modal-dialog { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .surge,
+  .conteudo-pagina > *:not(.row):not(.modal),
+  .conteudo-pagina > .row > [class*="col-"] { animation: none; }
+  .login-painel-marca::before,
+  .login-painel-marca::after { animation: none; }
+  .login-cartao .form-control:focus { transform: none; }
+  .modal.fade .modal-dialog { transition: none; transform: none; }
+}
 
 /* --- tela de login -------------------------------------------------------- */
 
 .pagina-login { min-height: 100vh; }
 
 .login-painel-marca {
-  background-color: var(--marca);
-  color: #fff;
+  background: linear-gradient(160deg, var(--marca), var(--marca-hover));
+  color: rgba(255, 255, 255, .85);
   position: relative;
   overflow: hidden;
 }
-.login-painel-marca::before {
+/* Duas manchas de luz que se deslocam devagar, em ciclos de duracao diferente
+   para nunca repetirem o mesmo encontro - o fundo "respira" sem chamar
+   atencao. So transform e animado, entao a coisa toda roda na GPU. */
+.login-painel-marca::before,
+.login-painel-marca::after {
   content: "";
   position: absolute;
-  inset: -15%;
-  background:
-    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, .12) 0, transparent 42%),
-    radial-gradient(circle at 82% 78%, rgba(255, 255, 255, .10) 0, transparent 38%);
+  width: 75%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(60px);
   pointer-events: none;
+  will-change: transform;
+}
+.login-painel-marca::before {
+  top: -20%;
+  left: -15%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .38) 0, transparent 70%);
+  animation: brilho-a 19s ease-in-out infinite alternate;
+}
+.login-painel-marca::after {
+  bottom: -25%;
+  right: -20%;
+  background: radial-gradient(circle, rgba(255, 190, 215, .34) 0, transparent 70%);
+  animation: brilho-b 25s ease-in-out infinite alternate;
+}
+@keyframes brilho-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(18%, 22%, 0) scale(1.25); }
+}
+@keyframes brilho-b {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-22%, -16%, 0) scale(.9); }
 }
 .login-painel-marca .login-conteudo { position: relative; z-index: 1; }
+.login-painel-marca .marca-nome,
+.login-painel-marca h1 { color: #fff; }
+.login-painel-marca .marca-linha { color: rgba(255, 255, 255, .7); }
+.login-painel-marca .btn-tema { background-color: rgba(255, 255, 255, .2); color: #fff; }
+.login-painel-marca .btn-tema:hover { background-color: rgba(255, 255, 255, .34); }
+.login-titulo {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -.005em;
+  line-height: 1.2;
+}
 .login-recurso {
   display: flex;
   gap: .75rem;
-  align-items: flex-start;
+  align-items: center;
+  font-size: .9rem;
 }
-.login-recurso .bi { font-size: 1.05rem; margin-top: .15rem; opacity: .95; }
-
-/* Menu do usuario logado */
-.avatar-usuario {
+.login-recurso .bi {
+  font-size: .95rem;
+  color: #fff;
+  background-color: rgba(255, 255, 255, .2);
+  border-radius: 50%;
+  width: 1.9rem;
+  height: 1.9rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, .2);
-  font-size: .8rem;
-  font-weight: 700;
-  color: #fff;
   flex: none;
+}
+/* O formulario numa ficha branca de canto bem arredondado, no lugar de solto
+   sobre o cinza: e o tratamento que o iOS da a um formulario destacado. */
+.login-cartao {
+  width: 100%;
+  max-width: 380px;
+  padding: 2rem 1.75rem;
+  background-color: var(--superficie);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, .3);
+}
+[data-bs-theme="dark"] .login-cartao {
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .7);
+}
+.login-rodape { color: rgba(255, 255, 255, .6); }
+.login-texto { max-width: 42ch; }
+.login-entrar { font-size: 1.6rem; }
+
+/* Um campo em foco ganha um leve destaque de profundidade. */
+.login-cartao .form-control:focus,
+.login-cartao .form-select:focus { transform: translateY(-1px); }
+.login-cartao .form-control { transition: transform .18s ease, background-color .18s ease,
+  border-color .18s ease, box-shadow .18s ease; }
+
+@media (max-width: 991.98px) {
+  /* O .row tem min-height:100vh e, empilhado, o align-content padrao divide a
+     altura entre as duas linhas - o que deixaria metade da tela de faixa
+     colorida vazia. Com flex-start cada faixa fica na altura do conteudo. */
+  .pagina-login { align-content: flex-start; }
+  .login-painel-marca {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+  .login-painel-marca .login-rodape { display: none; }
 }
 
 /* Cartao de regras por perfil */
@@ -419,10 +952,16 @@ thead.table-light, tfoot.table-light,
 
 /* --- responsivo ----------------------------------------------------------- */
 
+@media (max-width: 767.98px) {
+  .barra-linha { min-height: 48px; }
+  .busca-topo .form-control, .busca-topo .form-control:focus { width: 100%; }
+  .busca-topo { flex: 1 1 auto; }
+}
+
 @media (max-width: 575.98px) {
-  main.container-fluid { padding-left: .85rem !important; padding-right: .85rem !important; }
-  .kpi .kpi-valor { font-size: 1.35rem; }
-  h1.h4 { font-size: 1.15rem; }
+  main.container-fluid { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .pagina-titulo { font-size: 1.55rem; }
+  .kpi .kpi-valor { font-size: 1.5rem; }
   .card-body { padding: .9rem; }
   .modal-dialog { margin: .5rem; }
   .leitor-campo, .confirmar-leitura { min-height: 44px; }
@@ -431,8 +970,7 @@ thead.table-light, tfoot.table-light,
 }
 
 @media print {
-  .navbar, footer, .d-print-none { display: none !important; }
+  .barra-topo, footer, .d-print-none { display: none !important; }
   body { background: #fff; color: #000; }
   .card { box-shadow: none; border: 1px solid #ccc; }
-  .kpi::before { display: none; }
 }

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+{% from "_componentes.html" import botao_interativo %}
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#8e3b62">
+  <meta name="theme-color" content="#f2f2f7">
   <title>Entrar &middot; {{ NOME_LOJA }}</title>
   {% include "_head_tema.html" %}
   <link rel="stylesheet"
@@ -15,83 +16,76 @@
 <body>
 
 <div class="pagina-login row g-0">
-  <div class="col-12 col-lg-5 login-painel-marca d-flex flex-column justify-content-between p-4 p-lg-5">
-    <div class="login-conteudo">
-      <div class="d-flex justify-content-between align-items-start mb-4 mb-lg-5">
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-gem fs-3"></i>
-          <span class="fs-5 fw-semibold">{{ NOME_LOJA }}</span>
-        </div>
-        <button type="button" class="btn-tema" id="botao-tema"
-                title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
-          <i class="bi bi-moon-stars-fill"></i>
-          <i class="bi bi-sun-fill"></i>
-        </button>
-      </div>
+  <div class="col-12 col-lg-6 login-painel-marca d-flex flex-column justify-content-between p-4 p-lg-5">
+    <div class="login-conteudo d-flex justify-content-between align-items-center surge">
+      <span>
+        <span class="marca-nome">Ojuara</span>
+        <span class="marca-linha">Lingerie &middot; sistema de gestao</span>
+      </span>
+      <button type="button" class="btn-tema" id="botao-tema"
+              title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+        <i class="bi bi-moon-stars-fill"></i>
+        <i class="bi bi-sun-fill"></i>
+      </button>
+    </div>
 
-      <h1 class="h2 fw-bold mb-3 d-none d-lg-block">
-        Gestao completa da loja, do estoque ao crediario.
+    <div class="login-conteudo d-none d-lg-block my-5">
+      <h1 class="login-titulo mb-3 surge atraso-1">
+        Da nota fiscal a comissao,<br>a loja inteira em um lugar so.
       </h1>
-      <p class="opacity-75 mb-4 d-none d-lg-block">
-        Sistema local para lingerie e moda intima: catalogo por codigo e tamanho,
-        estoque sempre atrelado a nota fiscal, vendas, crediario e sacolas de
-        consignacao externa.
+      <p class="login-texto mb-5 surge atraso-2">
+        Sistema local para lingerie e moda intima: catalogo por codigo, tamanho e
+        cor, estoque sempre atrelado a nota fiscal, vendas, crediario e sacolas
+        de consignacao externa.
       </p>
 
-      <div class="d-none d-lg-flex flex-column gap-3">
-        <div class="login-recurso">
+      <div class="login-texto d-flex flex-column gap-3">
+        <div class="login-recurso surge atraso-3">
           <i class="bi bi-boxes"></i>
           <span>Catalogo e estoque sempre atrelados a Nota Fiscal</span>
         </div>
-        <div class="login-recurso">
+        <div class="login-recurso surge atraso-4">
           <i class="bi bi-bag-heart"></i>
           <span>Vendas, crediario e sacolas de consignacao externa</span>
         </div>
-        <div class="login-recurso">
+        <div class="login-recurso surge atraso-5">
           <i class="bi bi-shield-lock"></i>
           <span>Perfis de acesso para cada funcao da loja</span>
         </div>
       </div>
     </div>
 
-    <p class="small opacity-75 mb-0 login-conteudo">
-      {{ NOME_LOJA }} &middot; desenvolvido por {{ EMPRESA }}
+    <p class="rotulo-micro login-rodape mb-0 login-conteudo surge atraso-6">
+      {{ NOME_LOJA }} &middot; {{ EMPRESA }}
     </p>
   </div>
 
-  <div class="col-12 col-lg-7 d-flex align-items-center justify-content-center p-4 p-sm-5">
-    <div class="w-100" style="max-width: 380px;">
-      <div class="mb-4 d-lg-none text-center">
-        <i class="bi bi-gem fs-2 text-marca"></i>
-        <div class="fw-semibold">{{ NOME_LOJA }}</div>
-      </div>
-
-      <h2 class="h4 mb-1">Entrar</h2>
-      <p class="text-secondary small mb-4">Informe seu usuario e senha para continuar.</p>
+  <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center p-4 p-sm-5">
+    <div class="login-cartao surge atraso-1">
+      <h2 class="pagina-titulo login-entrar mb-1 surge atraso-2">Entrar</h2>
+      <p class="text-secondary mb-4 surge atraso-2">
+        Informe seu usuario e senha para continuar.
+      </p>
 
       {% with mensagens = get_flashed_messages(with_categories=true) %}
         {% for categoria, texto in mensagens %}
-          <div class="alert alert-{{ categoria }} py-2 small">{{ texto }}</div>
+          <div class="alert alert-{{ categoria }} py-2 surge">{{ texto }}</div>
         {% endfor %}
       {% endwith %}
 
       <form method="post" novalidate>
         <input type="hidden" name="proximo" value="{{ proximo }}">
 
-        <div class="mb-3">
+        <div class="mb-3 surge atraso-3">
           <label class="form-label" for="usuario">Usuario</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person"></i></span>
-            <input type="text" class="form-control" id="usuario" name="usuario"
-                   value="{{ usuario_informado }}" required autofocus
-                   autocomplete="username" autocapitalize="none" spellcheck="false">
-          </div>
+          <input type="text" class="form-control" id="usuario" name="usuario"
+                 value="{{ usuario_informado }}" required autofocus
+                 autocomplete="username" autocapitalize="none" spellcheck="false">
         </div>
 
-        <div class="mb-4">
+        <div class="mb-4 surge atraso-4">
           <label class="form-label" for="senha">Senha</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-lock"></i></span>
             <input type="password" class="form-control" id="senha" name="senha"
                    required autocomplete="current-password">
             <button class="btn btn-outline-secondary" type="button" id="ver-senha"
@@ -101,9 +95,10 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-marca w-100 fw-semibold py-2">
-          <i class="bi bi-box-arrow-in-right me-1"></i>Entrar
-        </button>
+        <div class="surge atraso-5">
+          {{ botao_interativo("Entrar", icone="bi-arrow-right",
+                              classe="w-100", tipo="submit") }}
+        </div>
       </form>
     </div>
   </div>

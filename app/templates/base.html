@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+{% from "_componentes.html" import botao_interativo %}
 <html lang="pt-br">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#8e3b62">
+  <meta name="theme-color" content="#f2f2f7">
   <title>{% block titulo %}Painel{% endblock %} &middot; {{ NOME_LOJA }}</title>
   {% include "_head_tema.html" %}
   <link rel="stylesheet"
@@ -14,171 +15,142 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-xxl navbar-dark bg-marca sticky-top shadow-sm">
-  <div class="container-fluid px-lg-1">
-    <a class="navbar-brand fw-semibold" href="{{ url_for('dashboard.index') }}">
-      <i class="bi bi-gem me-1"></i>{{ NOME_LOJA }}
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#menu-principal" aria-controls="menu-principal"
-            aria-expanded="false" aria-label="Abrir menu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<header class="barra-topo">
+  <div class="largura-conteudo">
 
-    <div class="collapse navbar-collapse" id="menu-principal">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'dashboard' }}"
-             href="{{ url_for('dashboard.index') }}">
-            <i class="bi bi-speedometer2 me-1"></i>Painel
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'produtos' }}"
-             href="{{ url_for('produtos.listar') }}">
-            <i class="bi bi-box-seam me-1"></i>Catalogo de produtos
-          </a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {{ 'active' if request.blueprint == 'estoque' }}"
-             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-receipt me-1"></i>Notas Fiscais
-          </a>
-          <ul class="dropdown-menu">
-            {% if pode('estoque.movimentar') %}
-              <li><a class="dropdown-item" href="{{ url_for('estoque.entrada') }}">
-                <i class="bi bi-box-arrow-in-down me-2 text-success"></i>Entrada de NF</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('estoque.devolucao') }}">
-                <i class="bi bi-arrow-return-left me-2 text-info"></i>Devolucao ao Fornecedor</a></li>
-              <li><hr class="dropdown-divider"></li>
-            {% endif %}
-            <li><a class="dropdown-item" href="{{ url_for('estoque.movimentacoes') }}">
-              <i class="bi bi-clock-history me-2"></i>Movimentacoes</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('estoque.notas_fiscais') }}">
-              <i class="bi bi-card-list me-2"></i>Listagem de Notas Fiscais</a></li>
-          </ul>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'vendas' }}"
-             href="{{ url_for('vendas.listar') }}">
-            <i class="bi bi-bag-check me-1"></i>Vendas
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'sacolas' }}"
-             href="{{ url_for('sacolas.listar') }}">
-            <i class="bi bi-bag-heart me-1"></i>Sacolas
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'clientes' }}"
-             href="{{ url_for('clientes.listar') }}">
-            <i class="bi bi-people me-1"></i>Clientes
-          </a>
-        </li>
-        {% if pode('vendedores.ver') %}
-          <li class="nav-item">
-            <a class="nav-link {{ 'active' if request.blueprint == 'vendedores' }}"
-               href="{{ url_for('vendedores.listar') }}">
-              <i class="bi bi-person-badge me-1"></i>Vendedores
-            </a>
+    <div class="barra-linha">
+      <a class="marca" href="{{ url_for('dashboard.index') }}">
+        <span class="marca-nome">Ojuara</span>
+        <span class="marca-linha d-none d-sm-inline">Lingerie</span>
+      </a>
+
+      <form class="busca-topo ms-auto" method="get"
+            action="{{ url_for('produtos.listar') }}" role="search">
+        <i class="bi bi-search"></i>
+        <input type="search" class="form-control" name="busca"
+               placeholder="Buscar no catalogo" aria-label="Buscar no catalogo">
+      </form>
+
+      <button type="button" class="btn-tema" id="botao-tema"
+              title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
+        <i class="bi bi-moon-stars-fill"></i>
+        <i class="bi bi-sun-fill"></i>
+      </button>
+
+      <div class="dropdown">
+        <a class="menu-conta d-flex align-items-center gap-2" href="#" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="avatar-usuario">{{ usuario.nome[:1] | upper }}</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li class="dropdown-header">
+            {{ usuario.nome }}<br>
+            <span class="text-secondary">{{ PAPEIS[usuario.papel].rotulo }}</span>
           </li>
-        {% endif %}
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {{ 'active' if request.blueprint == 'relatorios' }}"
-             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-graph-up me-1"></i>Relatorios
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{{ url_for('relatorios.comissoes') }}">
-              <i class="bi bi-cash-coin me-2"></i>
-              {{ 'Minha comissao' if not pode('relatorios.ver') else 'Comissoes por mes' }}</a></li>
-            {% if pode('relatorios.ver') %}
-              <li><a class="dropdown-item" href="{{ url_for('relatorios.estoque') }}">
-                <i class="bi bi-clipboard-data me-2"></i>Posicao de estoque</a></li>
-            {% endif %}
-          </ul>
-        </li>
-        {% if pode('usuarios.gerenciar') %}
-          <li class="nav-item">
-            <a class="nav-link {{ 'active' if request.blueprint == 'usuarios' }}"
-               href="{{ url_for('usuarios.listar') }}">
-              <i class="bi bi-shield-lock me-1"></i>Usuarios
-            </a>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{ url_for('auth.minha_senha') }}">
+            <i class="bi bi-key me-2"></i>Minha senha</a></li>
+          {% if pode('usuarios.gerenciar') %}
+            <li><a class="dropdown-item" href="{{ url_for('usuarios.listar') }}">
+              <i class="bi bi-shield-lock me-2"></i>Gerenciar usuarios</a></li>
+          {% endif %}
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+              <button class="dropdown-item text-danger" type="submit">
+                <i class="bi bi-box-arrow-right me-2"></i>Sair
+              </button>
+            </form>
           </li>
-        {% endif %}
-      </ul>
-
-      <div class="d-flex align-items-center gap-2">
-        <button type="button" class="btn-tema" id="botao-tema"
-                title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">
-          <i class="bi bi-moon-stars-fill"></i>
-          <i class="bi bi-sun-fill"></i>
-        </button>
-
-        {% if pode('vendas.criar') %}
-          <a class="btn btn-light btn-sm fw-semibold" href="{{ url_for('vendas.nova') }}">
-            <i class="bi bi-plus-lg me-1"></i>Nova venda
-          </a>
-        {% endif %}
-
-        <div class="dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white"
-             href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="avatar-usuario">{{ usuario.nome[:1] | upper }}</span>
-            <span class="d-none d-xxl-inline small text-start lh-sm">
-              {{ usuario.nome }}<br>
-              <span class="opacity-75">{{ PAPEIS[usuario.papel].rotulo }}</span>
-            </span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li class="dropdown-header">
-              {{ usuario.nome }}<br>
-              <span class="text-secondary">{{ usuario.usuario }}</span>
-            </li>
-            <li>
-              <span class="dropdown-item-text">
-                <span class="badge bg-{{ PAPEIS[usuario.papel].cor }}">
-                  {{ PAPEIS[usuario.papel].rotulo }}
-                </span>
-              </span>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{{ url_for('auth.minha_senha') }}">
-              <i class="bi bi-key me-2"></i>Minha senha</a></li>
-            {% if pode('usuarios.gerenciar') %}
-              <li><a class="dropdown-item" href="{{ url_for('usuarios.listar') }}">
-                <i class="bi bi-shield-lock me-2"></i>Gerenciar usuarios</a></li>
-            {% endif %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <form method="post" action="{{ url_for('auth.logout') }}">
-                <button class="dropdown-item text-danger" type="submit">
-                  <i class="bi bi-box-arrow-right me-2"></i>Sair
-                </button>
-              </form>
-            </li>
-          </ul>
-        </div>
+        </ul>
       </div>
+
+      {% if pode('vendas.criar') %}
+        {{ botao_interativo("Nova venda", href=url_for('vendas.nova'),
+                            icone="bi-bag-plus", classe="d-none d-md-inline-block") }}
+      {% endif %}
     </div>
+
+    <nav class="barra-nav" aria-label="Navegacao principal">
+      <a class="nav-pilula {{ 'active' if request.blueprint == 'dashboard' }}"
+         href="{{ url_for('dashboard.index') }}">Painel</a>
+
+      <a class="nav-pilula {{ 'active' if request.blueprint == 'produtos' }}"
+         href="{{ url_for('produtos.listar') }}">Catalogo</a>
+
+      <div class="dropdown">
+        <a class="nav-pilula dropdown-toggle {{ 'active' if request.blueprint == 'estoque' }}"
+           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Notas fiscais
+        </a>
+        <ul class="dropdown-menu">
+          {% if pode('estoque.movimentar') %}
+            <li><a class="dropdown-item" href="{{ url_for('estoque.entrada') }}">
+              <i class="bi bi-box-arrow-in-down me-2 text-success"></i>Entrada de NF</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('estoque.devolucao') }}">
+              <i class="bi bi-arrow-return-left me-2 text-info"></i>Devolucao ao Fornecedor</a></li>
+            <li><hr class="dropdown-divider"></li>
+          {% endif %}
+          <li><a class="dropdown-item" href="{{ url_for('estoque.movimentacoes') }}">
+            <i class="bi bi-clock-history me-2"></i>Movimentacoes</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('estoque.notas_fiscais') }}">
+            <i class="bi bi-card-list me-2"></i>Listagem de Notas Fiscais</a></li>
+        </ul>
+      </div>
+
+      <a class="nav-pilula {{ 'active' if request.blueprint == 'vendas' }}"
+         href="{{ url_for('vendas.listar') }}">Vendas</a>
+
+      <a class="nav-pilula {{ 'active' if request.blueprint == 'sacolas' }}"
+         href="{{ url_for('sacolas.listar') }}">Sacolas</a>
+
+      <a class="nav-pilula {{ 'active' if request.blueprint == 'clientes' }}"
+         href="{{ url_for('clientes.listar') }}">Clientes</a>
+
+      {% if pode('vendedores.ver') %}
+        <a class="nav-pilula {{ 'active' if request.blueprint == 'vendedores' }}"
+           href="{{ url_for('vendedores.listar') }}">Vendedores</a>
+      {% endif %}
+
+      <div class="dropdown">
+        <a class="nav-pilula dropdown-toggle {{ 'active' if request.blueprint == 'relatorios' }}"
+           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Relatorios
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{{ url_for('relatorios.comissoes') }}">
+            <i class="bi bi-cash-coin me-2"></i>
+            {{ 'Minha comissao' if not pode('relatorios.ver') else 'Comissoes por mes' }}</a></li>
+          {% if pode('relatorios.ver') %}
+            <li><a class="dropdown-item" href="{{ url_for('relatorios.estoque') }}">
+              <i class="bi bi-clipboard-data me-2"></i>Posicao de estoque</a></li>
+          {% endif %}
+        </ul>
+      </div>
+
+      {% if pode('usuarios.gerenciar') %}
+        <a class="nav-pilula {{ 'active' if request.blueprint == 'usuarios' }}"
+           href="{{ url_for('usuarios.listar') }}">Usuarios</a>
+      {% endif %}
+    </nav>
+
   </div>
-</nav>
+</header>
 
 <main class="container-fluid px-lg-4 py-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div class="cabecalho-pagina surge">
     <div>
-      <h1 class="h4 mb-0">{% block cabecalho %}{% endblock %}</h1>
-      <small class="text-secondary">{% block subcabecalho %}{% endblock %}</small>
+      <h1 class="pagina-titulo">{% block cabecalho %}{% endblock %}</h1>
+      <span class="pagina-apoio">{% block subcabecalho %}{% endblock %}</span>
     </div>
-    <div class="d-flex gap-2">{% block acoes %}{% endblock %}</div>
+    <div class="d-flex flex-wrap gap-2">{% block acoes %}{% endblock %}</div>
   </div>
 
   {% with mensagens = get_flashed_messages(with_categories=true) %}
     {% if mensagens %}
-      <div class="mb-3">
+      <div class="mb-3 surge atraso-1">
         {% for categoria, texto in mensagens %}
-          <div class="alert alert-{{ categoria }} alert-dismissible fade show py-2" role="alert">
+          <div class="alert alert-{{ categoria }} alert-dismissible fade show" role="alert">
             {{ texto }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"
                     aria-label="Fechar"></button>
@@ -188,10 +160,15 @@
     {% endif %}
   {% endwith %}
 
-  {% block conteudo %}{% endblock %}
+  {# O involucro existe para a animacao de entrada: o CSS encadeia os filhos
+     diretos daqui (e as colunas de uma .row direta), entao cada tela ganha a
+     entrada sem precisar marcar classe em template nenhum. #}
+  <div class="conteudo-pagina">
+    {% block conteudo %}{% endblock %}
+  </div>
 </main>
 
-<footer class="text-center text-secondary small py-4">
+<footer class="rodape">
   {{ NOME_LOJA }} &middot; sistema de gestao desenvolvido por {{ EMPRESA }}
 </footer>
 
