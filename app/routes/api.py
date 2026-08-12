@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 
 from .. import db
 from ..auth import meu_vendedor_id, pode, requer
-from ..services import produtos_disponiveis_vendedor
+from ..services import produtos_disponiveis_vendedor, sacolas_disponiveis_vendedor
 from ..utils import normaliza_codigo, ordenar_por_tamanho
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -71,6 +71,14 @@ def produtos_disponiveis_para_venda(vendedor_id):
             item.pop("preco_custo", None)
         resultado.append(item)
     return jsonify(resultado)
+
+
+@bp.route("/vendedores/<int:vendedor_id>/sacolas-disponiveis")
+@requer("vendas.criar")
+def sacolas_disponiveis_para_venda(vendedor_id):
+    if not pode("vendas.ver_todas"):
+        vendedor_id = meu_vendedor_id() or 0
+    return jsonify(sacolas_disponiveis_vendedor(vendedor_id))
 
 
 @bp.route("/produtos")

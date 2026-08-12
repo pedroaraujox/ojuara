@@ -19,8 +19,9 @@ def create_app(config_object=Config):
             raise RuntimeError(
                 "OJUARA_SECRET_KEY precisa ter ao menos 32 caracteres em producao."
             )
-        # Em producao ha exatamente um Nginx Proxy Manager confiavel na frente
-        # da aplicacao.
+    if app.config.get("PROXY_CONFIAVEL"):
+        # Use somente quando houver exatamente um proxy reverso confiavel na
+        # frente da aplicacao.
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     registra_filtros(app)
@@ -107,7 +108,7 @@ def create_app(config_object=Config):
         resposta.headers.setdefault(
             "Permissions-Policy", "camera=(self), microphone=(), geolocation=()"
         )
-        if app.config.get("PRODUCAO"):
+        if app.config.get("HTTPS_ATIVO"):
             resposta.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
             )

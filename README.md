@@ -56,6 +56,31 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 
 Abra **http://127.0.0.1:5000** no navegador. O sistema exige login.
 
+### Docker Compose local
+
+Com o Docker Desktop aberto, copie `.env.example` para `.env`, defina uma
+chave aleatória com pelo menos 32 caracteres e escolha a senha inicial do
+super administrador. Depois execute:
+
+```powershell
+docker compose up --build -d
+```
+
+A aplicação ficará disponível em **http://127.0.0.1:5000**. O banco e os
+backups ficam em volumes gerenciados pelo Docker (`ojuara_dados` e
+`ojuara_backups`) e sobrevivem à recriação dos containers.
+
+Comandos úteis:
+
+```powershell
+docker compose ps
+docker compose logs -f app
+docker compose down
+```
+
+`docker compose down` preserva os dados. Use `docker compose down -v` somente
+quando quiser apagar definitivamente o banco e os backups do ambiente Docker.
+
 ### Execução de produção
 
 A implantação oficial usa Docker na Contabo, Portainer e Nginx Proxy Manager.

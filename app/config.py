@@ -9,6 +9,12 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 class Config:
     AMBIENTE = os.environ.get("OJUARA_AMBIENTE", "desenvolvimento").strip().lower()
     PRODUCAO = AMBIENTE == "producao"
+    HTTPS_ATIVO = os.environ.get(
+        "OJUARA_HTTPS", "1" if PRODUCAO else "0"
+    ).strip() == "1"
+    PROXY_CONFIAVEL = os.environ.get(
+        "OJUARA_PROXY_CONFIAVEL", "1" if PRODUCAO else "0"
+    ).strip() == "1"
     SECRET_KEY = os.environ.get("OJUARA_SECRET_KEY", "ojuara-dev-secret-key")
 
     DATABASE = os.environ.get("OJUARA_DATABASE", os.path.join(BASE_DIR, "data", "ojuara.db"))
@@ -30,9 +36,9 @@ class Config:
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = PRODUCAO
+    SESSION_COOKIE_SECURE = HTTPS_ATIVO
     PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
-    PREFERRED_URL_SCHEME = "https" if PRODUCAO else "http"
+    PREFERRED_URL_SCHEME = "https" if HTTPS_ATIVO else "http"
 
     LOGIN_MAX_TENTATIVAS = 5
     LOGIN_BLOQUEIO_MINUTOS = 15

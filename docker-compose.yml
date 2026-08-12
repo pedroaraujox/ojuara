@@ -1,0 +1,89 @@
+name: ojuara
+
+services:
+  preparar-volumes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ojuara:local
+    user: "0:0"
+    command:
+      - python
+      - -c
+      - >-
+        import os;
+        [os.chown(caminho, 10001, 10001) for caminho in ('/app/data', '/app/backups')];
+        [os.chmod(caminho, 0o750) for caminho in ('/app/data', '/app/backups')]
+    volumes:
+      - dados:/app/data
+      - backups:/app/backups
+    network_mode: none
+    restart: "no"
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ojuara:local
+    restart: unless-stopped
+    init: true
+    depends_on:
+      preparar-volumes:
+        condition: service_completed_successfully
+    environment:
+      OJUARA_AMBIENTE: producao
+      OJUARA_HTTPS: "0"
+      OJUARA_PROXY_CONFIAVEL: "0"
+      OJUARA_SEED: "0"
+      OJUARA_HOST: 0.0.0.0
+      OJUARA_PORTA: "5000"
+      OJUARA_DATABASE: /app/data/ojuara.db
+      OJUARA_SECRET_KEY: ${OJUARA_SECRET_KEY:?Defina OJUARA_SECRET_KEY no arquivo .env}
+      OJUARA_SUPERADMIN: ${OJUARA_SUPERADMIN:-superadmin}
+      OJUARA_SUPERADMIN_SENHA: ${OJUARA_SUPERADMIN_SENHA:?Defina OJUARA_SUPERADMIN_SENHA no arquivo .env}
+    ports:
+      - "${OJUARA_PORTA_HOST:-5000}:5000"
+    volumes:
+      - dados:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/saude', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  backup:
+    image: ojuara:local
+    restart: unless-stopped
+    init: true
+    depends_on:
+      app:
+        condition: service_healthy
+    command: [python, scripts/backup_continuo.py]
+    network_mode: none
+    environment:
+      OJUARA_DATABASE: /app/data/ojuara.db
+      OJUARA_BACKUP_DIR: /app/backups
+      OJUARA_BACKUP_RETENCAO_DIAS: ${OJUARA_BACKUP_RETENCAO_DIAS:-30}
+      OJUARA_BACKUP_INTERVALO_SEGUNDOS: ${OJUARA_BACKUP_INTERVALO_SEGUNDOS:-86400}
+    volumes:
+      - dados:/app/data:ro
+      - backups:/app/backups
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  dados:
+  backups:

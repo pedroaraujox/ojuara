@@ -46,7 +46,18 @@
         </div>
         <div class="col-6 col-md-4">
           <label class="form-label" for="cor">Cor *</label>
-          <input type="text" class="form-control" id="cor" name="cor" required value="{{ produto.cor }}">
+          <select class="form-select" id="cor" name="cor" required>
+            <option value="" {{ 'selected' if not produto.cor }}>Selecione...</option>
+            {% for cor in CORES_PRODUTO %}
+              <option value="{{ cor }}" {{ 'selected' if produto.cor == cor }}>{{ cor }}</option>
+            {% endfor %}
+            {% if produto.cor and produto.cor not in CORES_PRODUTO %}
+              <option value="{{ produto.cor }}" selected>{{ produto.cor }}</option>
+            {% endif %}
+            <option value="__OUTRA__">Outra cor...</option>
+          </select>
+          <input type="text" class="form-control mt-2 d-none" id="cor_personalizada"
+                 name="cor_personalizada" placeholder="Digite a cor">
         </div>
         <div class="col-12 col-md-4">
           <label class="form-label" for="preco_custo">Preco de custo</label>
@@ -98,4 +109,18 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
+<script>
+(() => {
+  const selecao = document.getElementById('cor');
+  const personalizada = document.getElementById('cor_personalizada');
+  const atualizar = () => {
+    const outra = selecao.value === '__OUTRA__';
+    personalizada.classList.toggle('d-none', !outra);
+    personalizada.required = outra;
+    if (outra) personalizada.focus();
+  };
+  selecao.addEventListener('change', atualizar);
+  atualizar();
+})();
+</script>
 {% endblock %}

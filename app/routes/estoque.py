@@ -14,6 +14,7 @@ from ..services import (
     aplicar_lote,
     coletar_lote,
     obter_ou_criar_nota_fiscal,
+    produtos_disponiveis_na_nf,
     validar_lote,
 )
 from ..utils import TIPOS_MOVIMENTACAO, hoje_iso, parse_data
@@ -58,24 +59,46 @@ def baixa():
 @requer("estoque.movimentar")
 def devolucao():
     """Devolucao de pecas encalhadas ao fornecedor."""
-    if request.method == "POST":
-        resultado = _processa_lote(
-            request.form,
-            tipo="DEVOLUCAO_FORNECEDOR",
-            rotulo="Devolucao ao fornecedor",
+    nota_fiscal_id = request.form.get("nota_fiscal_id") if request.method == "POST" else request.args.get("nota_fiscal_id")
+    nota = None
+    disponiveis = []
+    if str(nota_fiscal_id or "").isdigit():
+        nota = db.query(
+            "SELECT * FROM notas_fiscais WHERE id = ? AND tipo = 'ENTRADA' AND ativa = 1",
+            (int(nota_fiscal_id),), one=True,
         )
-        if resultado is not None:
-            return resultado
+        if nota:
+            disponiveis = produtos_disponiveis_na_nf(nota["id"])
+    if request.method == "POST":
+        if not nota:
+            flash("Selecione uma NF de entrada ativa.", "danger")
+        else:
+            permitidos = {item["id"]: item["disponivel"] for item in disponiveis}
+            ids = request.form.getlist("produto_id[]")
+            quantidades = request.form.getlist("quantidade[]")
+            invalido = False
+            for indice, produto_id in enumerate(ids):
+                quantidade = int(quantidades[indice]) if indice < len(quantidades) and quantidades[indice].isdigit() else 0
+                if quantidade > 0 and (not produto_id.isdigit() or quantidade > permitidos.get(int(produto_id), 0)):
+                    invalido = True
+                    break
+            if invalido:
+                flash("Ha item fora da NF selecionada ou quantidade acima do disponivel.", "danger")
+            else:
+                resultado = _processa_lote(
+                    request.form, tipo="DEVOLUCAO_FORNECEDOR", rotulo="Devolucao ao fornecedor"
+                )
+                if resultado is not None:
+                    return resultado
 
     return render_template(
-        "estoque/baixa.html",
+        "estoque/devolucao.html",
         titulo="Devolucao ao fornecedor",
-        subtitulo="Informe a NF de devolucao e os produtos do catalogo devolvidos.",
-        acao=url_for("estoque.devolucao"),
-        tipo="DEVOLUCAO_FORNECEDOR",
-        cor="info",
-        rotulo_botao="Registrar devolucao",
-        rotulo_fornecedor="Fornecedor",
+        nota=nota,
+        disponiveis=disponiveis,
+        notas_disponiveis=db.query(
+            "SELECT * FROM notas_fiscais WHERE tipo = 'ENTRADA' AND ativa = 1 ORDER BY id DESC"
+        ) if not nota else None,
         motivos=[
             "Peca encalhada",
             "Colecao anterior",
@@ -83,7 +106,6 @@ def devolucao():
             "Grade incompleta",
             "Troca por outro modelo",
         ],
-        ultimas=_ultimas("DEVOLUCAO_FORNECEDOR"),
     )
 
 

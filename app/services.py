@@ -299,6 +299,45 @@ def produtos_disponiveis_vendedor(vendedor_id, codigo=None):
     return db.query(sql, params)
 
 
+def sacolas_disponiveis_vendedor(vendedor_id):
+    """Sacolas abertas do vendedor, com os itens ainda disponiveis para venda."""
+    vendedor_id = to_int(vendedor_id)
+    if not vendedor_id:
+        return []
+    sacolas = db.query(
+        """SELECT s.id, s.data_saida, nf.numero AS nf_numero, nf.fornecedor
+           FROM sacolas s
+           JOIN notas_fiscais nf ON nf.id = s.nota_fiscal_id
+           WHERE s.vendedor_id = ? AND s.status = 'ABERTA'
+             AND nf.tipo = 'ENTRADA' AND nf.ativa = 1
+             AND EXISTS (
+                 SELECT 1 FROM sacola_itens si WHERE si.sacola_id = s.id
+                   AND (si.quantidade_saida - si.quantidade_vendida - si.quantidade_devolvida) > 0
+             )
+           ORDER BY s.data_saida, s.id""",
+        (vendedor_id,),
+    )
+    totais = {item["id"]: item["estoque"] for item in produtos_disponiveis_vendedor(vendedor_id)}
+    resultado = []
+    for sacola in sacolas:
+        grupo = dict(sacola)
+        grupo["produtos"] = [dict(item) for item in db.query(
+            """SELECT p.id, p.codigo_fabricante, p.nome, p.tamanho, p.cor,
+                      p.preco_venda,
+                      (si.quantidade_saida - si.quantidade_vendida - si.quantidade_devolvida) AS disponivel
+               FROM sacola_itens si
+               JOIN produtos p ON p.id = si.produto_id
+               WHERE si.sacola_id = ? AND p.ativo = 1
+                 AND (si.quantidade_saida - si.quantidade_vendida - si.quantidade_devolvida) > 0
+               ORDER BY p.nome, p.tamanho, p.cor""",
+            (sacola["id"],),
+        )]
+        for produto in grupo["produtos"]:
+            produto["disponivel_total"] = totais.get(produto["id"], produto["disponivel"])
+        resultado.append(grupo)
+    return resultado
+
+
 def _alocar_item_em_sacolas(conexao, venda_id, venda_item_id, vendedor_id, produto_id, quantidade):
     """Consome a quantidade das sacolas elegiveis do vendedor, em ordem FIFO."""
     linhas = conexao.execute(

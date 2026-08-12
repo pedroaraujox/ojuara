@@ -2,9 +2,7 @@
 {% block titulo %}Catalogo de produtos{% endblock %}
 {% block cabecalho %}Catalogo de produtos{% endblock %}
 {% block subcabecalho %}
-  {{ totais.itens }} item(ns) &middot; {{ totais.pecas }} pecas
-  {%- if pode('custos.ver') %} &middot; custo {{ totais.custo | brl }}
-  &middot; venda {{ totais.venda | brl }}{% endif %}
+  {{ totais.itens }} item(ns) no catalogo geral do fornecedor
 {% endblock %}
 
 {% block acoes %}
@@ -14,6 +12,9 @@
     </a>
   {% endif %}
   {% if pode('produtos.editar') %}
+    <a href="{{ url_for('produtos.importar_pdf') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Importar PDF
+    </a>
     <a href="{{ url_for('produtos.novo') }}" class="btn btn-marca btn-sm">
       <i class="bi bi-plus-lg me-1"></i>Novo produto
     </a>
@@ -33,8 +34,6 @@
         <label class="form-label small" for="situacao">Situacao</label>
         <select class="form-select" id="situacao" name="situacao">
           <option value="todos"    {{ 'selected' if situacao == 'todos' }}>Ativos</option>
-          <option value="baixo"    {{ 'selected' if situacao == 'baixo' }}>Estoque no minimo ou abaixo</option>
-          <option value="zerado"   {{ 'selected' if situacao == 'zerado' }}>Estoque zerado</option>
           <option value="inativos" {{ 'selected' if situacao == 'inativos' }}>Inativos</option>
         </select>
       </div>
@@ -54,7 +53,6 @@
           {% if pode('custos.ver') %}<th class="text-end">Custo</th>{% endif %}
           <th class="text-end">Venda</th>
           {% if pode('custos.ver') %}<th class="text-end">Margem</th>{% endif %}
-          <th class="text-center">Estoque</th>
           <th class="text-end">Acoes</th>
         </tr>
       </thead>
@@ -78,15 +76,6 @@
                 {{ (produto.preco_venda - produto.preco_custo) | brl }}
               </td>
             {% endif %}
-            <td class="text-center">
-              {% if produto.estoque == 0 %}
-                <span class="badge bg-danger">0</span>
-              {% elif produto.estoque <= produto.estoque_minimo %}
-                <span class="badge bg-warning text-dark">{{ produto.estoque }}</span>
-              {% else %}
-                <span class="badge bg-success">{{ produto.estoque }}</span>
-              {% endif %}
-            </td>
             <td class="text-end text-nowrap">
               <a href="{{ url_for('produtos.detalhe', produto_id=produto.id) }}"
                  class="btn btn-sm btn-outline-secondary" title="Ficha"><i class="bi bi-eye"></i></a>
@@ -105,7 +94,7 @@
             </td>
           </tr>
         {% else %}
-          <tr><td colspan="{{ 9 if pode('custos.ver') else 7 }}"
+          <tr><td colspan="{{ 8 if pode('custos.ver') else 6 }}"
                   class="text-center text-secondary py-5">
             Nenhum produto encontrado.
             {% if pode('produtos.editar') %}
