@@ -8,6 +8,12 @@ Projeto de portfólio da **Outbox Tech**. No desenvolvimento, roda localmente;
 em produção, pode ser executado em Docker mantendo o SQLite em volume
 persistente, sem servidor de banco externo.
 
+## Documentação
+
+A documentação completa está em [`docs/README.md`](docs/README.md): manual do
+usuário, arquitetura, desenvolvimento, API, implantação, operação,
+backup/restauração, segurança e continuidade.
+
 ---
 
 ## Stack
@@ -83,7 +89,9 @@ quando quiser apagar definitivamente o banco e os backups do ambiente Docker.
 
 ### Execução de produção
 
-A implantação oficial usa Docker na Contabo, Portainer e Nginx Proxy Manager.
+A implantação oficial usa duas Stacks isoladas no Portainer: `desenvolvimento`
+em `ojuara-dev.outboxtech.com.br` e `producao` em
+`ojuara.outboxtech.com.br`, ambas atrás do Nginx Proxy Manager.
 O procedimento completo está em [`docs/implantacao-contabo.md`](docs/implantacao-contabo.md).
 
 O inicializador Windows `iniciar_ojuara.ps1` exige as configurações secretas
@@ -94,7 +102,7 @@ O banco real e os backups não são versionados. Na Contabo, permanecem nos
 diretórios persistentes configurados para a Stack. Banco, backups, logs,
 ambiente virtual e segredos são ignorados pelo Git.
 
-O fluxo de branches e:
+O fluxo de branches é:
 
 - `desenvolvimento`: trabalho e validacao;
 - `producao`: versao aprovada usada pela copia operacional local;

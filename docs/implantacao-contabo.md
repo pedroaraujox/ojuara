@@ -1,121 +1,93 @@
 # Implantação na Contabo
 
-Arquitetura de produção: o Portainer cria os contêineres a partir da branch
-`producao`; o Nginx Proxy Manager é o único serviço exposto à internet; o
-Registro.br aponta o subdomínio para o IP da Contabo. O SQLite e os backups
-ficam no host, fora do ciclo de vida dos contêineres.
+## Topologia oficial
 
-## 1. DNS no Registro.br
+Dois ambientes independentes são executados na mesma VM. O Nginx Proxy
+Manager é o único serviço público e encaminha HTTPS para a porta `5000` dos
+containers pela rede Docker privada `nginx-proxy_default`.
 
-Crie um registro `A`:
+| Ambiente | Branch | Stack | Container | Domínio |
+|---|---|---|---|---|
+| Dev | `desenvolvimento` | `ojuara-dev` | `ojuara-dev` | `ojuara-dev.outboxtech.com.br` |
+| Produção | `producao` | `ojuara-producao` | `ojuara-producao` | `ojuara.outboxtech.com.br` |
 
-- nome: `ojuara`
-- destino: IP público da Contabo
-- TTL: `300` durante a implantação
+## Pré-requisitos
 
-O endereço final será `ojuara.outboxtech.com.br`. Mantenha os servidores DNS
-atuais do domínio no Registro.br.
+- Registros A dos dois domínios apontando para o IP público da VM.
+- Docker, Portainer e Nginx Proxy Manager ativos.
+- Portas públicas 80/443 encaminhadas apenas ao Nginx Proxy Manager.
+- Rede externa Docker `nginx-proxy_default` existente.
 
-## 2. Diretórios persistentes
+## Criar a Stack de dev
 
-A Stack cria automaticamente os diretórios usados pelo Ojuara e ajusta suas
-permissões com o serviço temporário `preparar_diretorios`. Se preferir
-prepará-los manualmente, use:
-
-```bash
-sudo install -d -m 750 -o 10001 -g 10001 /opt/ojuara/data
-sudo install -d -m 750 -o 10001 -g 10001 /opt/ojuara/backups
-```
-
-O contêiner roda sem privilégios, com UID e GID `10001`. Essas permissões são
-necessárias para gravar o banco e os backups.
-
-## 3. Banco real
-
-Antes da primeira inicialização, envie o arquivo local `data/ojuara.db` para:
+No Portainer, crie uma Stack pelo Git:
 
 ```text
-/opt/ojuara/data/ojuara.db
+Nome: ojuara-dev
+Repositório: https://github.com/pedroaraujox/ojuara.git
+Referência: refs/heads/desenvolvimento
+Compose path: compose.portainer.yaml
 ```
 
-Pare o Ojuara no notebook durante a cópia e use o backup mais recente e
-verificado. Depois do envio:
-
-```bash
-sudo chown 10001:10001 /opt/ojuara/data/ojuara.db
-sudo chmod 640 /opt/ojuara/data/ojuara.db
-```
-
-Nunca envie o banco ao GitHub. Caso o arquivo não exista, o Ojuara criará um
-banco vazio com apenas o superadministrador.
-
-## 4. Rede do Nginx Proxy Manager
-
-No Portainer, abra **Networks** e copie o nome exato da rede usada pelo Nginx
-Proxy Manager. Nesta Contabo, a rede identificada é `nginx-proxy_default`.
-
-## 5. Stack no Portainer
-
-Crie uma Stack pelo repositório Git privado, selecionando:
-
-- repositório: `https://github.com/pedroaraujox/ojuara.git`
-- referência: `refs/heads/producao`
-- arquivo Compose: `compose.yaml`
-
-Use uma credencial de leitura do GitHub no Portainer. Não grave token no
-repositório nem no arquivo Compose.
-
-Configure estas variáveis no ambiente da Stack:
+Variáveis:
 
 ```text
-OJUARA_SECRET_KEY=<valor aleatório com pelo menos 32 caracteres>
+OJUARA_IMAGE_NAME=ojuara-dev
+OJUARA_CONTAINER_NAME=ojuara-dev
+OJUARA_DATA_DIR=/opt/ojuara-dev/data
+OJUARA_BACKUP_DIR=/opt/ojuara-dev/backups
 OJUARA_SUPERADMIN=superadmin
-OJUARA_SUPERADMIN_SENHA=<senha forte e exclusiva>
-OJUARA_DATA_DIR=/opt/ojuara/data
-OJUARA_BACKUP_DIR=/opt/ojuara/backups
-NPM_NETWORK=<nome exato da rede do Nginx Proxy Manager>
+OJUARA_BACKUP_RETENCAO_DIAS=30
+OJUARA_BACKUP_INTERVALO_SEGUNDOS=86400
+NPM_NETWORK=nginx-proxy_default
+OJUARA_SECRET_KEY=<segredo exclusivo com 32+ caracteres>
+OJUARA_SUPERADMIN_SENHA=<senha inicial exclusiva>
 ```
 
-Mantenha apenas uma réplica do serviço `ojuara`. A Stack não publica a porta
-5000 no host: ela fica acessível somente na rede Docker compartilhada.
+## Criar a Stack de produção
 
-## 6. Proxy e HTTPS
+Use o mesmo procedimento com:
 
-No Nginx Proxy Manager, crie um **Proxy Host**:
+```text
+Nome: ojuara-producao
+Referência: refs/heads/producao
+OJUARA_IMAGE_NAME=ojuara-producao
+OJUARA_CONTAINER_NAME=ojuara-producao
+OJUARA_DATA_DIR=/opt/ojuara-producao/data
+OJUARA_BACKUP_DIR=/opt/ojuara-producao/backups
+```
 
-- Domain Names: `ojuara.outboxtech.com.br`
-- Scheme: `http`
-- Forward Hostname / IP: `ojuara`
-- Forward Port: `5000`
-- Block Common Exploits: ativado
+Os demais valores são equivalentes, mas segredo e senha devem ser diferentes
+de dev. Mantenha uma única réplica por causa do SQLite.
 
-Na aba SSL, solicite um novo certificado Let's Encrypt e ative **Force SSL**,
-**HTTP/2 Support** e **HSTS Enabled**. O certificado só será emitido depois que
-o DNS estiver apontando para a Contabo e as portas 80 e 443 alcançarem o Nginx
-Proxy Manager.
+## Nginx Proxy Manager
 
-## 7. Verificação
+Crie um Proxy Host por domínio com esquema `http`, porta `5000`, **Block Common
+Exploits** e certificado Let's Encrypt com **Force SSL**.
 
-No Portainer, confirme que `ojuara` está `healthy` e `backup` está em execução.
-Teste:
+Use o IP atribuído ao container na rede `nginx-proxy_default` conforme a
+política desta VM. Digite o IP sem espaços; um espaço inicial faz o Nginx tentar
+resolver o valor como hostname e causa `502`.
 
-1. acesso HTTPS e login;
-2. cadastro simples e persistência após recriar os contêineres;
-3. presença de um arquivo em `/opt/ojuara/backups`;
-4. restauração desse backup em um ambiente de teste.
+Descubra os endereços com:
 
-Copie os backups periodicamente para outro servidor ou armazenamento. Um
-backup mantido apenas na mesma Contabo não protege contra perda da máquina.
+```bash
+docker inspect ojuara-dev --format '{{range $n, $r := .NetworkSettings.Networks}}{{$n}} {{$r.IPAddress}}{{println}}{{end}}'
+docker inspect ojuara-producao --format '{{range $n, $r := .NetworkSettings.Networks}}{{$n}} {{$r.IPAddress}}{{println}}{{end}}'
+```
 
-## 8. Atualizações
+IPs Docker podem mudar após redeploy. Atualize o Proxy Host quando isso ocorrer.
 
-O desenvolvimento entra primeiro em `desenvolvimento`. Depois dos testes, um
-Pull Request aprovado é incorporado em `producao`. Antes de atualizar a Stack:
+## Validação
 
-1. confirme que o backup mais recente abre corretamente;
-2. mande o Portainer buscar novamente o repositório e reconstruir a imagem;
-3. acompanhe o healthcheck e os logs;
-4. teste login e uma consulta que use o banco.
+```bash
+docker ps --filter name=ojuara --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+sudo ls -la /opt/ojuara-dev/data /opt/ojuara-dev/backups
+sudo ls -la /opt/ojuara-producao/data /opt/ojuara-producao/backups
+```
 
-Não apague os diretórios `/opt/ojuara/data` e `/opt/ojuara/backups` ao remover
-ou recriar a Stack.
+Confirme `healthy`, backup em execução, certificado válido, login e
+persistência após recriar o container. Troque a senha inicial no primeiro acesso.
+
+Para atualizações e incidentes, consulte [operacao.md](operacao.md). Para
+recuperação de dados, consulte [backup-restauracao.md](backup-restauracao.md).

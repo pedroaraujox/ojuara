@@ -18,6 +18,10 @@ patterns you need before touching multiple files at once.
 
 ## Commands
 
+Documentation is indexed at `docs/README.md`. Changes to behavior,
+configuration, routes, permissions, infrastructure, backup or operations must
+update the corresponding canonical document in the same change.
+
 ### Regra obrigatoria apos alteracoes
 
 Sempre que qualquer codigo do sistema for alterado, execute o rebuild e reinicie
