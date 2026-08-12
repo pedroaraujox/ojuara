@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Devolucao ao fornecedor{% endblock %}
+{% block cabecalho %}Devolucao ao fornecedor{% endblock %}
+{% block subcabecalho %}Escolha a NF de entrada e devolva somente produtos recebidos nela.{% endblock %}
+{% block acoes %}
+  <a href="{{ url_for('estoque.notas_fiscais') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-card-list me-1"></i>Listagem de Notas Fiscais</a>
+  <a href="{{ url_for('estoque.movimentacoes', tipo='DEVOLUCAO_FORNECEDOR') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clock-history me-1"></i>Ver movimentacoes</a>
+{% endblock %}
+{% block conteudo %}
+{% if not nota %}
+<div class="row justify-content-center"><div class="col-12 col-md-7 col-lg-5"><div class="card">
+  <div class="card-header"><i class="bi bi-receipt me-2 text-marca"></i>Nota fiscal de origem</div>
+  <div class="card-body"><form method="get">
+    <label class="form-label fw-semibold" for="nota_fiscal_id">De qual NF os produtos serao devolvidos?</label>
+    <select class="form-select form-select-lg" id="nota_fiscal_id" name="nota_fiscal_id" onchange="this.form.submit()" autofocus>
+      <option value="">Selecione a NF...</option>
+      {% for opcao in notas_disponiveis %}<option value="{{ opcao.id }}">NF {{ opcao.numero }}{% if opcao.fornecedor %} - {{ opcao.fornecedor }}{% endif %} ({{ opcao.data | data_br }})</option>{% endfor %}
+    </select>
+    <div class="form-text">So aparecem NFs de entrada ativas.</div>
+  </form>{% if not notas_disponiveis %}<div class="alert alert-warning mt-3 mb-0 small">Nenhuma NF de entrada ativa no momento.</div>{% endif %}</div>
+</div></div></div>
+{% else %}
+<div class="alert alert-light border d-flex justify-content-between align-items-center gap-2">
+  <span>NF <strong class="text-marca">{{ nota.numero }}</strong>{% if nota.fornecedor %} &middot; {{ nota.fornecedor }}{% endif %}</span>
+  <a href="{{ url_for('estoque.devolucao') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Trocar NF</a>
+</div>
+<form method="post" id="form-devolucao">
+  <input type="hidden" name="nota_fiscal_id" value="{{ nota.id }}"><input type="hidden" name="numero_nf" value="{{ nota.numero }}"><input type="hidden" name="fornecedor" value="{{ nota.fornecedor or '' }}">
+  <div class="row g-3"><div class="col-12 col-xl-8"><div class="card">
+    <div class="card-header"><i class="bi bi-box-arrow-left me-2 text-marca"></i>Produtos disponiveis nesta NF</div>
+    <div class="table-responsive"><table class="table tabela-compacta align-middle mb-0"><thead class="table-light"><tr><th>Codigo</th><th>Produto</th><th>Tam.</th><th>Cor</th><th class="text-center">Disponivel</th><th style="width:15%">Devolver</th></tr></thead><tbody>
+    {% for produto in disponiveis %}<tr>
+      <td><span class="codigo">{{ produto.codigo_fabricante }}</span><input type="hidden" name="produto_id[]" value="{{ produto.id }}"><input type="hidden" name="codigo[]" value="{{ produto.codigo_fabricante }}"><input type="hidden" name="tamanho[]" value="{{ produto.tamanho or '' }}"><input type="hidden" name="cor[]" value="{{ produto.cor or '' }}"></td>
+      <td>{{ produto.nome }}</td><td>{{ produto.tamanho or '-' }}</td><td>{{ produto.cor or '-' }}</td><td class="text-center"><span class="badge bg-secondary">{{ produto.disponivel }}</span></td>
+      <td><input type="number" class="form-control form-control-sm qtd-devolucao" name="quantidade[]" min="1" max="{{ produto.disponivel }}" value="" placeholder="0"></td>
+    </tr>{% else %}<tr><td colspan="6" class="text-center text-secondary py-4">Nenhum produto com saldo disponivel nesta NF.</td></tr>{% endfor %}
+    </tbody></table></div><div class="card-footer text-end fw-semibold">Total: <span id="total-pecas">0</span> peca(s)</div>
+  </div></div>
+  <div class="col-12 col-xl-4"><div class="card"><div class="card-header"><i class="bi bi-info-circle me-2 text-marca"></i>Dados da devolucao</div><div class="card-body">
+    <div class="mb-3"><label class="form-label" for="data_nf">Data</label><input type="date" class="form-control" id="data_nf" name="data_nf" value="{{ HOJE }}"></div>
+    <div class="mb-3"><label class="form-label" for="motivo">Motivo</label><select class="form-select" id="motivo" name="motivo"><option value="">Selecione...</option>{% for motivo in motivos %}<option value="{{ motivo }}">{{ motivo }}</option>{% endfor %}</select></div>
+    <div class="mb-3"><label class="form-label" for="observacao">Observacao</label><textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea></div>
+    <button class="btn btn-info w-100 fw-semibold" type="submit"><i class="bi bi-check2-circle me-1"></i>Registrar devolucao</button>
+  </div></div></div></div>
+</form>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script>document.querySelectorAll('.qtd-devolucao').forEach(function(c){c.addEventListener('input',function(){var t=0;document.querySelectorAll('.qtd-devolucao').forEach(function(i){t+=parseInt(i.value,10)||0;});document.getElementById('total-pecas').textContent=t;});});document.getElementById('form-devolucao').addEventListener('submit',function(){document.querySelectorAll('.qtd-devolucao').forEach(function(c){if(!(parseInt(c.value,10)>0)){c.closest('tr').querySelectorAll('input').forEach(function(i){i.disabled=true;});}});});</script>{% endblock %}

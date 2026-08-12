@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block titulo %}Importar produtos em lote{% endblock %}
+{% block cabecalho %}Importar produtos em lote{% endblock %}
+{% block subcabecalho %}Use o CSV revisado para maior precisao ou reconheca um catalogo PDF.{% endblock %}
+
+{% block acoes %}
+<a href="{{ url_for('produtos.listar') }}" class="btn btn-outline-secondary btn-sm">
+  <i class="bi bi-arrow-left me-1"></i>Voltar
+</a>
+{% endblock %}
+
+{% block conteudo %}
+<div class="alert alert-info">
+  <strong>Esta etapa cadastra somente o catalogo.</strong> Tamanho e cor nao aparecem no PDF e
+  precisam ser informados aqui. O estoque continuara zerado ate a Entrada de NF.
+</div>
+
+<div class="card mb-3" id="painel-arquivo">
+  <div class="card-header"><i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>1. Selecionar arquivo</div>
+  <div class="card-body row g-3 align-items-end">
+    <div class="col-12">
+      <div class="p-3 rounded border bg-body-tertiary">
+        <label class="form-label fw-semibold" for="arquivo-csv">Planilha CSV revisada (recomendado)</label>
+        <div class="input-group">
+          <input class="form-control" type="file" id="arquivo-csv" accept="text/csv,.csv">
+          <button type="button" class="btn btn-success" id="carregar-csv">
+            <i class="bi bi-table me-1"></i>Carregar CSV
+          </button>
+        </div>
+        <div class="form-text">Colunas: codigo_fabricante, nome, tamanho, cor, preco_custo e preco_venda.</div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <label class="form-label" for="arquivo-pdf">Ou reconhecer diretamente um PDF</label>
+      <input class="form-control" type="file" id="arquivo-pdf" accept="application/pdf,.pdf">
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label" for="padrao-tamanho">Tamanho padrao *</label>
+      <input class="form-control text-uppercase" id="padrao-tamanho" value="U" required>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label" for="padrao-cor">Cor padrao *</label>
+      <input class="form-control" id="padrao-cor" value="Sortida" required>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label" for="multiplicador">Venda = custo x</label>
+      <input class="form-control" type="number" id="multiplicador" min="0.01" step="0.01" value="2.00">
+    </div>
+    <div class="col-12">
+      <button type="button" class="btn btn-marca" id="analisar">
+        <i class="bi bi-stars me-1"></i>Analisar PDF
+      </button>
+      <span class="ms-2 text-secondary small" id="progresso"></span>
+    </div>
+  </div>
+</div>
+
+<div class="card d-none" id="painel-revisao">
+  <div class="card-header d-flex flex-wrap justify-content-between gap-2 align-items-center">
+    <span><i class="bi bi-check2-square me-2 text-marca"></i>2. Revisar produtos</span>
+    <button type="button" class="btn btn-success btn-sm" id="importar">
+      <i class="bi bi-database-add me-1"></i>Cadastrar selecionados
+    </button>
+  </div>
+  <div class="card-body border-bottom py-2 small text-secondary">
+    O reconhecimento e uma sugestao. Confira principalmente nome, codigo e preco; desmarque capas ou paginas sem produto.
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr>
+        <th class="text-center">Usar</th><th>Pagina</th><th>Codigo *</th><th>Nome *</th>
+        <th>Tamanho *</th><th>Cor *</th><th>Custo</th><th>Venda *</th><th></th>
+      </tr></thead>
+      <tbody id="itens"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modal-imagem" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Pagina do catalogo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body text-center"><img id="imagem-pagina" class="img-fluid" alt="Pagina do produto"></div>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js"></script>
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+
+const $ = (seletor) => document.querySelector(seletor);
+const corpo = $('#itens');
+const imagens = new Map();
+let worker = null;
+
+function limparTexto(texto) {
+  return (texto || '').replace(/\s+/g, ' ').trim();
+}
+
+function interpretar(texto) {
+  const linhas = (texto || '').split(/\r?\n/).map(limparTexto).filter(Boolean);
+  const codigos = (texto.match(/\b\d{5}\b/g) || []).filter(c => !/^20\d{2}/.test(c));
+  const codigo = codigos.at(-1) || '';
+  const precoMatch = texto.match(/R\$?\s*(\d{1,3}[,.]\d{2,3})/i) || texto.match(/\b(\d{2,3}[,.]\d{2,3})\b/);
+  const custo = precoMatch ? Number(precoMatch[1].replace(',', '.')) : 0;
+  const ignorar = /^(R\$|CONT[EÉ]M|\d|MORENA|LINGERIE|WWW\.|SALVE|AVISO)/i;
+  let candidatas = linhas.filter(l => !ignorar.test(l) && !l.includes(codigo) && l.length >= 3 && l.length <= 55);
+  let nome = candidatas.slice(-2).join(' ').replace(/[^A-Za-zÀ-ÿ0-9 .\-/]/g, '').trim();
+  return {codigo, nome, custo};
+}
+
+function moeda(numero) { return Number(numero || 0).toFixed(2); }
+function escapar(texto) {
+  return String(texto || '').replace(/[&<>"']/g, caractere => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+  })[caractere]);
+}
+
+function adicionarLinha(pagina, dados, imagem) {
+  if (imagem) imagens.set(pagina, imagem);
+  const multiplicador = Number($('#multiplicador').value || 0);
+  const tr = document.createElement('tr');
+  tr.dataset.pagina = pagina;
+  tr.innerHTML = `
+    <td class="text-center"><input type="checkbox" class="form-check-input usar" ${dados.codigo ? 'checked' : ''}></td>
+    <td class="text-nowrap">${pagina}</td>
+    <td><input class="form-control form-control-sm codigo" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" value="${dados.codigo}"></td>
+    <td style="min-width:260px"><input class="form-control form-control-sm nome" value="${escapar(dados.nome)}"></td>
+    <td><input class="form-control form-control-sm tamanho text-uppercase" style="min-width:85px" value="${escapar($('#padrao-tamanho').value)}"></td>
+    <td><input class="form-control form-control-sm cor" style="min-width:110px" value="${escapar($('#padrao-cor').value)}"></td>
+    <td><input type="number" class="form-control form-control-sm custo" style="min-width:100px" min="0" step="0.01" value="${moeda(dados.custo)}"></td>
+    <td><input type="number" class="form-control form-control-sm venda" style="min-width:100px" min="0.01" step="0.01" value="${moeda(dados.custo * multiplicador)}"></td>
+    <td><button type="button" class="btn btn-sm btn-outline-secondary ver" title="Ver pagina" ${imagem ? '' : 'disabled'}><i class="bi bi-image"></i></button></td>`;
+  tr.querySelector('.custo').addEventListener('change', e => tr.querySelector('.venda').value = moeda(Number(e.target.value) * Number($('#multiplicador').value || 0)));
+  if (imagem) tr.querySelector('.ver').addEventListener('click', () => { $('#imagem-pagina').src = imagens.get(pagina); bootstrap.Modal.getOrCreateInstance($('#modal-imagem')).show(); });
+  corpo.appendChild(tr);
+}
+
+function lerCsv(texto) {
+  const linhas = []; let linha = []; let campo = ''; let aspas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (c === '"' && aspas && texto[i + 1] === '"') { campo += '"'; i++; }
+    else if (c === '"') aspas = !aspas;
+    else if (c === ';' && !aspas) { linha.push(campo); campo = ''; }
+    else if ((c === '\n' || c === '\r') && !aspas) {
+      if (c === '\r' && texto[i + 1] === '\n') i++;
+      linha.push(campo); campo = ''; if (linha.some(v => v.trim())) linhas.push(linha); linha = [];
+    } else campo += c;
+  }
+  if (campo || linha.length) { linha.push(campo); linhas.push(linha); }
+  return linhas;
+}
+
+$('#carregar-csv').addEventListener('click', async () => {
+  const arquivo = $('#arquivo-csv').files[0];
+  if (!arquivo) { alert('Selecione o arquivo CSV.'); return; }
+  try {
+    const linhas = lerCsv((await arquivo.text()).replace(/^\uFEFF/, ''));
+    const cabecalho = linhas.shift().map(v => v.trim().toLowerCase());
+    const obrigatorias = ['codigo_fabricante','nome','tamanho','cor','preco_custo','preco_venda'];
+    if (obrigatorias.some(c => !cabecalho.includes(c))) throw new Error('O CSV nao possui todas as colunas obrigatorias.');
+    corpo.innerHTML = ''; imagens.clear();
+    linhas.forEach((linha, indice) => {
+      const valor = nome => linha[cabecalho.indexOf(nome)] || '';
+      adicionarLinha(`CSV ${indice + 2}`, {
+        codigo: valor('codigo_fabricante').trim(), nome: valor('nome').trim(),
+        custo: Number(valor('preco_custo').replace(',','.')) || 0
+      }, null);
+      const tr = corpo.lastElementChild;
+      tr.querySelector('.tamanho').value = valor('tamanho').trim();
+      tr.querySelector('.cor').value = valor('cor').trim();
+      tr.querySelector('.venda').value = moeda(Number(valor('preco_venda').replace(',','.')) || 0);
+    });
+    $('#painel-revisao').classList.remove('d-none');
+    $('#progresso').textContent = `${linhas.length} produto(s) carregado(s) do CSV.`;
+    $('#painel-revisao').scrollIntoView({behavior:'smooth'});
+  } catch (erro) { alert(erro.message || 'Nao foi possivel ler o CSV.'); }
+});
+
+$('#analisar').addEventListener('click', async () => {
+  const arquivo = $('#arquivo-pdf').files[0];
+  if (!arquivo) { alert('Selecione o arquivo PDF.'); return; }
+  if (!$('#padrao-tamanho').value.trim() || !$('#padrao-cor').value.trim()) { alert('Informe o tamanho e a cor padrao.'); return; }
+  $('#analisar').disabled = true; corpo.innerHTML = ''; imagens.clear();
+  try {
+    const pdf = await pdfjsLib.getDocument({data: await arquivo.arrayBuffer()}).promise;
+    worker = worker || await Tesseract.createWorker('por');
+    for (let numero = 1; numero <= pdf.numPages; numero++) {
+      $('#progresso').textContent = `Lendo pagina ${numero} de ${pdf.numPages}...`;
+      const pagina = await pdf.getPage(numero);
+      const viewport = pagina.getViewport({scale: 1.35});
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await pagina.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+      const imagem = canvas.toDataURL('image/jpeg', 0.78);
+      const resultado = await worker.recognize(canvas);
+      const dados = interpretar(resultado.data.text);
+      if (dados.codigo || numero > 1) adicionarLinha(numero, dados, imagem);
+    }
+    $('#painel-revisao').classList.remove('d-none');
+    $('#progresso').textContent = `${pdf.numPages} pagina(s) analisada(s).`;
+    $('#painel-revisao').scrollIntoView({behavior:'smooth'});
+  } catch (erro) {
+    console.error(erro); alert('Nao foi possivel analisar o PDF. Verifique sua internet e tente novamente.');
+  } finally { $('#analisar').disabled = false; }
+});
+
+$('#importar').addEventListener('click', async () => {
+  const linhas = [...corpo.querySelectorAll('tr')].filter(tr => tr.querySelector('.usar').checked);
+  const produtos = linhas.map(tr => ({
+    codigo_fabricante: tr.querySelector('.codigo').value, nome: tr.querySelector('.nome').value,
+    tamanho: tr.querySelector('.tamanho').value, cor: tr.querySelector('.cor').value,
+    preco_custo: tr.querySelector('.custo').value, preco_venda: tr.querySelector('.venda').value
+  }));
+  if (!produtos.length) { alert('Selecione ao menos um produto.'); return; }
+  $('#importar').disabled = true;
+  try {
+    const resposta = await fetch('{{ url_for("produtos.importar_pdf") }}', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({produtos})});
+    const dados = await resposta.json();
+    if (!resposta.ok) { alert([dados.erro, ...(dados.erros || [])].join('\n')); return; }
+    alert(dados.mensagem); window.location.href = dados.destino;
+  } catch (erro) { alert('Falha ao enviar os produtos. Tente novamente.'); }
+  finally { $('#importar').disabled = false; }
+});
+</script>
+{% endblock %}

@@ -18,6 +18,17 @@ patterns you need before touching multiple files at once.
 
 ## Commands
 
+### Regra obrigatoria apos alteracoes
+
+Sempre que qualquer codigo do sistema for alterado, execute o rebuild e reinicie
+os servicos antes de entregar a tarefa ao usuario. No ambiente Docker local, use
+`docker compose up --build -d` e confirme em seguida que o servico `app` esta
+saudavel. Uma alteracao de codigo nao esta concluida enquanto esse rebuild e a
+verificacao de saude nao terminarem com sucesso.
+
+Nesta maquina, se `docker` nao estiver no `PATH`, use diretamente
+`C:\Users\Pedro Araujo\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe`.
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1

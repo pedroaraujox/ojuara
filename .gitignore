@@ -35,8 +35,8 @@ instance/
 *.traineddata
 tmp*/
 .tmp_*
+outputs/
 .claude/
-.cloudflared/
 .producao/
 
 # Editores / SO

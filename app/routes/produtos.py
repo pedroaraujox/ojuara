@@ -7,12 +7,13 @@ atraves de uma Nota Fiscal lancada em Estoque (ver app/routes/estoque.py).
 
 import sqlite3
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 from .. import db
 from ..auth import requer
 from ..services import ErroNegocio, movimentar, obter_ou_criar_nota_fiscal
 from ..utils import (
+    CORES_PRODUTO,
     agora_iso,
     hoje_iso,
     normaliza_codigo,
@@ -23,6 +24,98 @@ from ..utils import (
 )
 
 bp = Blueprint("produtos", __name__, url_prefix="/produtos")
+
+
+@bp.route("/importar-pdf", methods=["GET", "POST"])
+@requer("produtos.editar")
+def importar_pdf():
+    """Revisa no navegador e grava produtos reconhecidos em catalogos PDF.
+
+    A leitura do arquivo ocorre no proprio navegador. O servidor recebe apenas
+    os dados ja revisados, evitando guardar o PDF (que pode conter informacoes
+    comerciais) e mantendo o Flask sem dependencias pesadas de OCR.
+    """
+    if request.method == "GET":
+        return render_template("produtos/importar_pdf.html")
+
+    corpo = request.get_json(silent=True) or {}
+    itens = corpo.get("produtos")
+    if not isinstance(itens, list) or not itens:
+        return jsonify(erro="Nenhum produto foi enviado para cadastro."), 400
+    if len(itens) > 500:
+        return jsonify(erro="O limite por importacao e de 500 produtos."), 400
+
+    preparados = []
+    erros = []
+    chaves = set()
+    repetidos_no_arquivo = 0
+    for indice, item in enumerate(itens, start=1):
+        if not isinstance(item, dict):
+            erros.append("Linha %d: dados invalidos." % indice)
+            continue
+        dados = {
+            "codigo_fabricante": normaliza_codigo(item.get("codigo_fabricante")),
+            "nome": str(item.get("nome") or "").strip(),
+            "tamanho": normaliza_tamanho(item.get("tamanho")),
+            "cor": str(item.get("cor") or "").strip(),
+            "preco_custo": to_decimal(item.get("preco_custo")),
+            "preco_venda": to_decimal(item.get("preco_venda")),
+            "ativo": 1,
+        }
+        erro = _valida(dados)
+        if erro:
+            erros.append("Linha %d (%s): %s" % (indice, dados["codigo_fabricante"] or "sem codigo", erro))
+            continue
+        chave = (dados["codigo_fabricante"], dados["tamanho"], dados["cor"].casefold())
+        if chave in chaves:
+            repetidos_no_arquivo += 1
+            continue
+        chaves.add(chave)
+        preparados.append(dados)
+
+    if erros:
+        return jsonify(erro="Revise os itens destacados antes de importar.", erros=erros), 400
+
+    conexao = db.get_db()
+    novos = []
+    existentes = 0
+    for dados in preparados:
+        if conexao.execute(
+            """SELECT 1 FROM produtos
+               WHERE codigo_fabricante = ? AND tamanho = ? AND lower(cor) = lower(?)""",
+            (dados["codigo_fabricante"], dados["tamanho"], dados["cor"]),
+        ).fetchone():
+            existentes += 1
+        else:
+            novos.append(dados)
+
+    try:
+        for dados in novos:
+            conexao.execute(
+                """INSERT INTO produtos
+                       (codigo_fabricante, nome, tamanho, cor, preco_custo,
+                        preco_venda, estoque, estoque_minimo, ativo, criado_em)
+                   VALUES (?, ?, ?, ?, ?, ?, 0, 0, 1, ?)""",
+                (
+                    dados["codigo_fabricante"], dados["nome"], dados["tamanho"],
+                    dados["cor"], dados["preco_custo"], dados["preco_venda"], agora_iso(),
+                ),
+            )
+        conexao.commit()
+    except sqlite3.IntegrityError:
+        conexao.rollback()
+        return jsonify(erro="A importacao encontrou um conflito inesperado. Nada foi cadastrado."), 409
+
+    ignorados = existentes + repetidos_no_arquivo
+    mensagem = "%d produto(s) cadastrado(s) no catalogo com estoque zerado." % len(novos)
+    if ignorados:
+        mensagem += " %d produto(s) ja existente(s) ou repetido(s) foram pulados." % ignorados
+    return jsonify(
+        mensagem=mensagem,
+        quantidade=len(novos),
+        ignorados=ignorados,
+        destino=url_for("produtos.listar"),
+    )
 
 
 @bp.route("/")
@@ -39,13 +132,10 @@ def listar():
         curinga = "%%%s%%" % busca
         params += [curinga, curinga, curinga]
 
-    if situacao == "baixo":
-        sql += " AND estoque <= estoque_minimo AND ativo = 1"
-    elif situacao == "zerado":
-        sql += " AND estoque = 0"
-    elif situacao == "inativos":
+    if situacao == "inativos":
         sql += " AND ativo = 0"
-    elif situacao == "todos":
+    else:
+        situacao = "todos"
         sql += " AND ativo = 1"
 
     sql += " ORDER BY nome ASC, tamanho ASC"
@@ -53,9 +143,6 @@ def listar():
 
     totais = {
         "itens": len(produtos),
-        "pecas": sum(p["estoque"] for p in produtos),
-        "custo": sum(p["estoque"] * p["preco_custo"] for p in produtos),
-        "venda": sum(p["estoque"] * p["preco_venda"] for p in produtos),
     }
 
     return render_template(
@@ -282,11 +369,14 @@ def alternar(produto_id):
 # --- apoio ------------------------------------------------------------------
 
 def _le_formulario(form):
+    cor = (form.get("cor") or "").strip()
+    if cor == "__OUTRA__":
+        cor = (form.get("cor_personalizada") or "").strip()
     return {
         "codigo_fabricante": normaliza_codigo(form.get("codigo_fabricante")),
         "nome": (form.get("nome") or "").strip(),
         "tamanho": normaliza_tamanho(form.get("tamanho")),
-        "cor": (form.get("cor") or "").strip(),
+        "cor": cor,
         "preco_custo": to_decimal(form.get("preco_custo")),
         "preco_venda": to_decimal(form.get("preco_venda")),
         "ativo": 1 if form.get("ativo") else 0,
@@ -314,4 +404,4 @@ def _valida(dados):
 # Data usada nos templates de historico.
 @bp.app_context_processor
 def _hoje():
-    return {"HOJE": hoje_iso()}
+    return {"HOJE": hoje_iso(), "CORES_PRODUTO": CORES_PRODUTO}

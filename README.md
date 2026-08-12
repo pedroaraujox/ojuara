@@ -4,8 +4,9 @@ Sistema web de gestão para loja de varejo de lingeries e roupas íntimas: catá
 de produtos por código + tamanho + cor, estoque sempre atrelado a Nota Fiscal, vendas
 com crediário, clientes, vendedores e comissões.
 
-Projeto de portfólio da **Outbox Tech**. Roda 100% local — sem Docker, sem
-container, sem servidor de banco externo.
+Projeto de portfólio da **Outbox Tech**. No desenvolvimento, roda localmente;
+em produção, pode ser executado em Docker mantendo o SQLite em volume
+persistente, sem servidor de banco externo.
 
 ---
 
@@ -55,17 +56,43 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 
 Abra **http://127.0.0.1:5000** no navegador. O sistema exige login.
 
-### Execucao de producao local
+### Docker Compose local
 
-A publicacao pelo Cloudflare Tunnel usa `servidor_producao.py`, servido por
-Waitress somente em `127.0.0.1:5000`. O inicializador `iniciar_ojuara.ps1` exige
-as configuracoes secretas no ambiente do usuario Windows e sempre define
-`OJUARA_SEED=0`; dados demonstrativos nunca sao criados nesse modo.
+Com o Docker Desktop aberto, copie `.env.example` para `.env`, defina uma
+chave aleatória com pelo menos 32 caracteres e escolha a senha inicial do
+super administrador. Depois execute:
 
-O banco real permanece em `data/ojuara.db` e nao e versionado. A tarefa do
-Windows **Ojuara - Backup Diario** executa `executar_backup.ps1` no login e
-diariamente as 20h, gerando copias verificadas em `backups/` por 30 dias.
-Banco, backups, logs, ambiente virtual e segredos sao ignorados pelo Git.
+```powershell
+docker compose up --build -d
+```
+
+A aplicação ficará disponível em **http://127.0.0.1:5000**. O banco e os
+backups ficam em volumes gerenciados pelo Docker (`ojuara_dados` e
+`ojuara_backups`) e sobrevivem à recriação dos containers.
+
+Comandos úteis:
+
+```powershell
+docker compose ps
+docker compose logs -f app
+docker compose down
+```
+
+`docker compose down` preserva os dados. Use `docker compose down -v` somente
+quando quiser apagar definitivamente o banco e os backups do ambiente Docker.
+
+### Execução de produção
+
+A implantação oficial usa Docker na Contabo, Portainer e Nginx Proxy Manager.
+O procedimento completo está em [`docs/implantacao-contabo.md`](docs/implantacao-contabo.md).
+
+O inicializador Windows `iniciar_ojuara.ps1` exige as configurações secretas
+no ambiente do usuário e sempre define `OJUARA_SEED=0`; dados demonstrativos
+nunca são criados nesse modo.
+
+O banco real e os backups não são versionados. Na Contabo, permanecem nos
+diretórios persistentes configurados para a Stack. Banco, backups, logs,
+ambiente virtual e segredos são ignorados pelo Git.
 
 O fluxo de branches e:
 

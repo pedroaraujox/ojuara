@@ -296,7 +296,7 @@ def requer(*permissoes):
 
 def init_app(app):
     """Exige login em tudo, menos nas rotas publicas, e expoe helpers ao Jinja."""
-    publicas = {"auth.login", "static"}
+    publicas = {"auth.login", "saude.verificar", "static"}
 
     @app.before_request
     def exige_login():

@@ -28,6 +28,15 @@ TIPOS_SAIDA = ("VENDA", "BAIXA", "DEVOLUCAO_FORNECEDOR", "SAIDA_SACOLA")
 # Tipos de movimentacao que sao sempre lancados atrelados a um numero de NF.
 TIPOS_COM_NF = ("ENTRADA", "BAIXA", "DEVOLUCAO_FORNECEDOR")
 
+# Paleta padrao do catalogo. Formularios exibem esta lista, mas continuam
+# aceitando uma cor personalizada para produtos fora do padrao.
+CORES_PRODUTO = (
+    "Amarelo", "Azul", "Azul-marinho", "Bege", "Branco", "Caramelo",
+    "Cinza", "Coral", "Dourado", "Estampado", "Laranja", "Lilas",
+    "Marrom", "Nude", "Preto", "Rosa", "Roxo", "Sortida", "Verde",
+    "Vermelho", "Vinho",
+)
+
 
 # --- conversoes -------------------------------------------------------------
 

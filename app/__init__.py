@@ -19,8 +19,9 @@ def create_app(config_object=Config):
             raise RuntimeError(
                 "OJUARA_SECRET_KEY precisa ter ao menos 32 caracteres em producao."
             )
-        # O servidor escuta apenas em localhost; o unico proxy esperado e o
-        # cloudflared local, que informa protocolo, host e IP do visitante.
+    if app.config.get("PROXY_CONFIAVEL"):
+        # Use somente quando houver exatamente um proxy reverso confiavel na
+        # frente da aplicacao.
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     registra_filtros(app)
@@ -43,6 +44,7 @@ def create_app(config_object=Config):
         produtos,
         relatorios,
         sacolas,
+        saude,
         usuarios,
         vendas,
         vendedores,
@@ -59,6 +61,7 @@ def create_app(config_object=Config):
     app.register_blueprint(crediario.bp)
     app.register_blueprint(relatorios.bp)
     app.register_blueprint(sacolas.bp)
+    app.register_blueprint(saude.bp)
     app.register_blueprint(api.bp)
 
     @app.errorhandler(404)
@@ -105,7 +108,7 @@ def create_app(config_object=Config):
         resposta.headers.setdefault(
             "Permissions-Policy", "camera=(self), microphone=(), geolocation=()"
         )
-        if app.config.get("PRODUCAO"):
+        if app.config.get("HTTPS_ATIVO"):
             resposta.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
             )
